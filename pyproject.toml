@@ -1,0 +1,73 @@
+[build-system]
+    requires = ["setuptools>=61.0.0", "wheel"]
+    build-backend = "setuptools.build_meta"
+
+[project]
+name = "devtools"
+version = "1.0.0b0"
+requires-python = ">=3.9"
+description = "This package contains a *pot-pourri* of various tools required to develop python packages at Idiap's GitLab infrastructure"
+dynamic = ["readme"]
+license = {text = "BSD 3-Clause License"}
+authors = [
+  {name = "Andre Anjos"},
+  {email = "andre.anjos@idiap.ch"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.urls]
+documentation = "https://www.idiap.ch/software/bob/docs/bob/devtools/master/"
+homepage = "https://pypi.org/project/devtools"
+repository = "https://gitlab.idiap.ch/bob/devtools"
+changelog = "https://gitlab.idiap.ch/bob/devtools/-/releases"
+
+[project.optional-dependencies]
+qa = ["pre-commit"]
+doc = [
+    "sphinx",
+    "furo",
+    ]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    ]
+
+[tool.setuptools]
+zip-safe = true
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md"}
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.isort]
+profile = "black"
+line_length = 80
+order_by_type = true
+lines_between_types = 1
+
+[tool.black]
+line-length = 80
+
+[tool.coverage.run]
+relative_files = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=append",
+    "--cov-report=term-missing",
+    "--cov=devtools",
+]
+junit_logging = "all"
+junit_log_passing_tests = false

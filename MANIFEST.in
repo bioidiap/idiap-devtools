@@ -1,0 +1,2 @@
+recursive-include doc *.rst *.ico *.png
+recursive-include tests *.py

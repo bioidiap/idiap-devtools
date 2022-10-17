@@ -1,0 +1,15 @@
+*~
+*.swp
+*.pyc
+*.egg-info
+.nfs*
+.coverage
+*.DS_Store
+.envrc
+coverage.xml
+test_results.xml
+junit-coverage.xml
+html/
+build/
+doc/api/
+dist/
