@@ -1,0 +1,75 @@
+{
+  "dateutil": {
+    "versions": {
+      "latest": "https://dateutil.readthedocs.io/en/latest/",
+      "stable": "https://dateutil.readthedocs.io/en/stable/",
+      "2.8.2": "https://dateutil.readthedocs.io/en/2.8.2/",
+      "2.8.1": "https://dateutil.readthedocs.io/en/2.8.1/",
+      "2.8.0": "https://dateutil.readthedocs.io/en/2.8.0/",
+      "2.7.5": "https://dateutil.readthedocs.io/en/2.7.5/",
+      "2.7.4": "https://dateutil.readthedocs.io/en/2.7.4/",
+      "2.7.3": "https://dateutil.readthedocs.io/en/2.7.3/",
+      "2.7.2": "https://dateutil.readthedocs.io/en/2.7.2/",
+      "2.7.1": "https://dateutil.readthedocs.io/en/2.7.1/",
+      "2.7.0": "https://dateutil.readthedocs.io/en/2.7.0/",
+      "2.6.1": "https://dateutil.readthedocs.io/en/2.6.1/",
+      "2.6.0": "https://dateutil.readthedocs.io/en/2.6.0/",
+      "2.5.3": "https://dateutil.readthedocs.io/en/2.5.3/",
+      "2.5.2": "https://dateutil.readthedocs.io/en/2.5.2/",
+      "2.5.1": "https://dateutil.readthedocs.io/en/2.5.1/",
+      "2.5.0": "https://dateutil.readthedocs.io/en/2.5.0/",
+      "2.4.2": "https://dateutil.readthedocs.io/en/2.4.2/",
+      "2.4.1": "https://dateutil.readthedocs.io/en/2.4.1/",
+      "2.4.0": "https://dateutil.readthedocs.io/en/2.4.0/",
+      "2.3": "https://dateutil.readthedocs.io/en/2.3/"
+    },
+    "sources": {
+      "readthedocs": "dateutil"
+    }
+  },
+  "python-gitlab": {
+    "versions": {
+      "latest": "https://python-gitlab.readthedocs.io/en/latest/",
+      "main": "https://python-gitlab.readthedocs.io/en/main/",
+      "master": "https://python-gitlab.readthedocs.io/en/master/",
+      "stable": "https://python-gitlab.readthedocs.io/en/stable/",
+      "v3.12.0": "https://python-gitlab.readthedocs.io/en/v3.12.0/",
+      "v3.11.0": "https://python-gitlab.readthedocs.io/en/v3.11.0/",
+      "v3.10.0": "https://python-gitlab.readthedocs.io/en/v3.10.0/",
+      "v3.9.0": "https://python-gitlab.readthedocs.io/en/v3.9.0/",
+      "v3.8.1": "https://python-gitlab.readthedocs.io/en/v3.8.1/",
+      "v3.8.0": "https://python-gitlab.readthedocs.io/en/v3.8.0/",
+      "v3.7.0": "https://python-gitlab.readthedocs.io/en/v3.7.0/",
+      "v3.6.0": "https://python-gitlab.readthedocs.io/en/v3.6.0/",
+      "v3.5.0": "https://python-gitlab.readthedocs.io/en/v3.5.0/",
+      "v3.4.0": "https://python-gitlab.readthedocs.io/en/v3.4.0/",
+      "v3.3.0": "https://python-gitlab.readthedocs.io/en/v3.3.0/",
+      "v3.2.0": "https://python-gitlab.readthedocs.io/en/v3.2.0/",
+      "v3.1.1": "https://python-gitlab.readthedocs.io/en/v3.1.1/",
+      "v3.1.0": "https://python-gitlab.readthedocs.io/en/v3.1.0/",
+      "v3.0.0": "https://python-gitlab.readthedocs.io/en/v3.0.0/",
+      "v2.10.1": "https://python-gitlab.readthedocs.io/en/v2.10.1/",
+      "v2.10.0": "https://python-gitlab.readthedocs.io/en/v2.10.0/",
+      "v2.9.0": "https://python-gitlab.readthedocs.io/en/v2.9.0/",
+      "v2.8.0": "https://python-gitlab.readthedocs.io/en/v2.8.0/",
+      "v2.7.1": "https://python-gitlab.readthedocs.io/en/v2.7.1/",
+      "v2.7.0": "https://python-gitlab.readthedocs.io/en/v2.7.0/",
+      "v2.6.0": "https://python-gitlab.readthedocs.io/en/v2.6.0/",
+      "v2.5.0": "https://python-gitlab.readthedocs.io/en/v2.5.0/",
+      "v2.4.0": "https://python-gitlab.readthedocs.io/en/v2.4.0/",
+      "v2.3.1": "https://python-gitlab.readthedocs.io/en/v2.3.1/",
+      "v2.3.0": "https://python-gitlab.readthedocs.io/en/v2.3.0/",
+      "v2.2.0": "https://python-gitlab.readthedocs.io/en/v2.2.0/",
+      "v1.15.0": "https://python-gitlab.readthedocs.io/en/v1.15.0/",
+      "v1.14.0": "https://python-gitlab.readthedocs.io/en/v1.14.0/",
+      "v1.13.0": "https://python-gitlab.readthedocs.io/en/v1.13.0/",
+      "v1.12.1": "https://python-gitlab.readthedocs.io/en/v1.12.1/",
+      "v1.12.0": "https://python-gitlab.readthedocs.io/en/v1.12.0/",
+      "v1.11.0": "https://python-gitlab.readthedocs.io/en/v1.11.0/",
+      "v1.10.0": "https://python-gitlab.readthedocs.io/en/v1.10.0/"
+    },
+    "sources": {
+      "readthedocs": "python-gitlab"
+    }
+  }
+}

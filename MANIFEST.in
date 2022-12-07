@@ -1,2 +1,7 @@
-recursive-include doc *.rst *.ico *.png
+# Copyright © 2022 Idiap Research Institute <contact@idiap.ch>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+include LICENSES/*.txt
+recursive-include doc *.rst *.ico *.png *.json *.txt
 recursive-include tests *.py

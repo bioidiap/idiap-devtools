@@ -1,42 +1,105 @@
+.. Copyright © 2022 Idiap Research Institute <contact@idiap.ch>
+..
+.. SPDX-License-Identifier: BSD-3-Clause
+
 .. _devtools.install:
 
 ==============
  Installation
 ==============
 
-.. todo:: fine-tune installation instructions for devtools here
+First install mamba_ (conda).  Then, in its ``base`` environment, install this
+package using one of the methods below:
 
 
-We support two installation modes, through pip_, or mamba_ (conda).
+.. tab:: mamba/conda
+
+   .. code-block:: sh
+
+      mamba install -n base -c https://www.idiap.ch/software/bob/conda/label/beta -c conda-forge devtools
 
 
-With pip
---------
+.. tab:: pip
 
-.. code-block:: sh
+   .. warning:
 
-   # stable, from PyPI:
-   $ pip install devtools
+      While this is possible for testing purposes, it is not recommended.
+      Pip-installing this package may break your ``base`` conda environment.
 
-   # latest beta, from GitLab package registry:
-   $ pip install --pre --index-url https://gitlab.idiap.ch/api/v4/groups/bob/-/packages/pypi/simple --extra-index-url https://pypi.org/simple devtools
+   .. code-block:: sh
 
-.. tip::
-
-   To avoid long command-lines you may configure pip to define the indexes and
-   package search priorities as you like.
+      conda activate base && pip install git+https://gitlab.idiap.ch/bob/devtools
 
 
-With conda
-----------
+.. _devtools.install.setup:
 
-.. code-block:: sh
+Setup
+-----
 
-   # stable:
-   $ mamba install -c https://www.idiap.ch/software/bob/conda -c conda-forge devtools
+.. _devtools.install.setup.profile:
 
-   # latest beta:
-   $ mamba install -c https://www.idiap.ch/software/bob/conda/label/beta -c conda-forge devtools
+Setting up Development Profiles
+===============================
 
+Development profiles contain a set of constants that are useful for developing,
+and interacting with projects from a particular GitLab group, or groups.  They
+may contain webserver addresses, and both Python and conda installation
+constraints (package pinnings).  Development profiles are GitLab repositories,
+organized in a specific way, and potentially used by various development,
+continuous integration, and administrative tools.  Some examples:
+
+* Bob's group: https://gitlab.idiap.ch/bob/dev-profile
+
+While developing using the command-line utility ``devtool``, one or more
+commands may require you pass the base directory of a development profile.
+
+You may set a number of development shortcuts by configuring the section
+``[profiles]`` on the file ``~/.devtoolrc``, like so:
+
+.. code-block:: toml
+
+   [profiles]
+   default = "bob"
+   bob = "~/dev-profiles/bob"
+   custom = "~/dev-profiles/custom-profile"
+
+The special ``default`` entry refers to one of the other entries in this
+section, and determines the default profile to use, if none is passed on the
+command-line.  All other entries match name to a local directory where the
+profile is available.
+
+Development profiles are typically shared via GitLab as independent
+repositories.  In this case, **it is your job to clone and ensure the profile
+is kept up-to-date with your group's development requirements.**
+
+
+.. _devtools.install.setup.gitlab:
+
+Automated GitLab interaction
+============================
+
+Some of the commands in the ``devtool`` command-line application require access
+to your GitLab private token, which you can pass at every iteration, or setup
+at your ``~/.python-gitlab.cfg``.  Please note that in case you don't set it
+up, it will request for your API token on-the-fly, what can be cumbersome and
+repeatitive.  Your ``~/.python-gitlab.cfg`` should roughly look like this
+(there must be an "idiap" section on it, at least):
+
+.. code-block:: ini
+
+   [global]
+   default = idiap
+   ssl_verify = true
+   timeout = 15
+
+   [idiap]
+   url = https://gitlab.idiap.ch
+   private_token = <obtain token at your settings page in gitlab>
+   api_version = 4
+
+
+We recommend you set ``chmod 600`` to this file to avoid prying eyes to read
+out your personal token. Once you have your token set up, communication should
+work transparently between the built-in GitLab client and the server.
 
 .. include:: links.rst

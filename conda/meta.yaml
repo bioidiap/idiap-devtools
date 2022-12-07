@@ -1,0 +1,54 @@
+# Copyright © 2022 Idiap Research Institute <contact@idiap.ch>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+{% set data = load_file_data(RECIPE_DIR + '/../pyproject.toml') %}
+
+package:
+  name: {{ data['project']['name'] }}
+  version: {{ data['project']['version'] }}
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  number: {{ environ.get('BOB_BUILD_NUMBER', 0) }}
+  run_exports:
+    - {{ pin_subpackage(data['project']['name']) }}
+  script:
+    - "{{ PYTHON }} -m pip install {{ SRC_DIR }} -vv"
+
+requirements:
+  host:
+    - python >=3.9
+    - pip
+  run:
+    - python >=3.9
+    - pip
+    # conda/mamba ecosystem dependencies
+    - conda
+    - conda-build
+    - mamba
+    - boa
+    # things we depend on
+    - click >=8
+    - tomli
+    - tomli-w
+    - cookiecutter
+    - webdavclient3
+    - pyyaml
+    - gitpython
+    - python-gitlab
+    - python-dateutil
+    - setuptools
+
+test:
+  imports:
+    - {{ data['project']['name'] }}
+
+about:
+  home: {{ data['project']['urls']['homepage'] }}
+  summary: {{ data['project']['description'] }}
+  license: {{ data['project']['license']['text'] }}
+  license_family: BSD

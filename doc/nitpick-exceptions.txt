@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-include:
-  - project: bob/dev-profile
-    ref: main
-    file: /gitlab/python.yml
+py:class conda_build.config.Config
+py:class pkg_resources.Requirement
+py:class os._Environ
