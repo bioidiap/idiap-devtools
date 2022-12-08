@@ -6,3 +6,13 @@ include:
   - project: bob/dev-profile
     ref: main
     file: /gitlab/python.yml
+
+
+documentation:
+  image: quay.io/condaforge/linux-anvil-cos7-x86_64
+  before_script:
+    - rm -f /home/conda/.condarc
+    - mamba update -n base --all
+    - eval "$(/opt/conda/bin/conda shell.bash hook)"
+    - conda activate base
+    - pip install --pre --index-url https://gitlab.idiap.ch/api/v4/groups/bob/-/packages/pypi/simple --extra-index-url https://pypi.org/simple '.[doc]' sphinx
