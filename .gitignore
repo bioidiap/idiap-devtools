@@ -18,3 +18,7 @@ html/
 build/
 doc/api/
 dist/
+.mypy_cache/
+.pytest_cache/
+cache/
+venv/
