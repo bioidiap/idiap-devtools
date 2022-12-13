@@ -83,14 +83,11 @@ lines_between_types = 1
 [tool.black]
 line-length = 80
 
-[tool.coverage.run]
-relative_files = true
-
 [tool.pytest.ini_options]
 addopts = [
-    "--import-mode=append",
-    "--cov-report=term-missing",
     "--cov=devtools",
+    "--cov-report=term-missing",
+    "--import-mode=append",
 ]
 junit_logging = "all"
 junit_log_passing_tests = false
