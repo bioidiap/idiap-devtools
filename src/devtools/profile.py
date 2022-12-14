@@ -58,8 +58,11 @@ def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
 
     # if you get to this point, then no local directory with that name exists
     # check the user configuration for a specific key
-    with open(_USER_CONFIGURATION, "rb") as f:
-        usercfg = tomli.load(f)
+    if os.path.exists(_USER_CONFIGURATION):
+        with open(_USER_CONFIGURATION, "rb") as f:
+            usercfg = tomli.load(f)
+    else:
+        usercfg = {}
 
     if name == "default":
         value = usercfg.get("profiles", {}).get("default", None)
@@ -188,7 +191,7 @@ class Profile:
     def get(
         self, key: str | typing.Iterable[str], default: typing.Any = None
     ) -> typing.Any:
-        """Reads the contents of a certain toml profile varilable."""
+        """Reads the contents of a certain toml profile variable."""
 
         if isinstance(key, str):
             return self.data.get(key, default)
@@ -200,6 +203,47 @@ class Profile:
             if d is None:
                 return default
         return d
+
+    def get_path(
+        self,
+        key: str | typing.Iterable[str],
+        default: None | pathlib.Path = None,
+    ) -> pathlib.Path | None:
+        """Reads the contents of path from the profile and resolves it.
+
+        This function will search for a given profile key, consider it points
+        to a path (relative or absolute) and will return that resolved path to
+        the caller.
+
+        Arguments:
+
+            key: The key, pointing to the variable inside ``profile.toml`` that
+                contains the datafile to be _load_conda_packages
+
+            default: The value to return to the caller by default, if the key
+              does not exist within the profile.
+
+
+        Returns:
+
+            The selected profile file path, or the contents of ``default``
+            otherwise.
+        """
+
+        path = self.get(key)
+
+        if path is None:
+            return default
+
+        if isinstance(path, dict):
+            raise KeyError(f"Key {key} does not correspond to a path")
+
+        ppath = pathlib.Path(path)
+
+        if not ppath.is_absolute():
+            ppath = self._basedir / ppath
+
+        return ppath
 
     def get_file_contents(
         self, key: str | typing.Iterable[str], default: None | str = None
@@ -225,20 +269,8 @@ class Profile:
             ``default`` otherwise.
         """
 
-        path = self.get(key)
-
-        if path is None:
-            return default
-
-        if isinstance(path, dict):
-            raise KeyError(f"Key {key} does not correspond to a file path")
-
-        ppath = pathlib.Path(path)
-
-        if not ppath.is_absolute():
-            ppath = self._basedir / ppath
-
-        return ppath.open().read()
+        path = self.get_path(key)
+        return path.open().read() if path is not None else default
 
     def conda_constraints(self, python: str) -> dict[str, str] | None:
         """Returns a list of conda constraints given the current profile.

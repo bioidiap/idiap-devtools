@@ -49,7 +49,7 @@ Examples:
     "printing to help you understand what will be done",
 )
 @verbosity_option(logger=logger)
-def release(changelog: typing.TextIO, dry_run: bool) -> None:
+def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
 
     By using a CHANGELOG file as an input (e.g. that can be generated with the

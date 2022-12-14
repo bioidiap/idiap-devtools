@@ -147,7 +147,6 @@ class PreserveIndentCommand(click.Command):
 
             formatter: The formatter to use for printing text
         """
-        __import__("ipdb").set_trace()
 
         if self.epilog:
             formatter.write_paragraph()

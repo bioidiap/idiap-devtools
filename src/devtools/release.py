@@ -16,6 +16,8 @@ import typing
 from distutils.version import StrictVersion
 
 import gitlab
+import tomli
+import tomli_w
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ def get_gitlab_instance() -> gitlab.Gitlab:
                 "Asking for user token on the command line...",
                 "|".join(cfgs),
             )
-            token = input("Your %s (private) token: " % server)
+            token = input(f"Your {server} (private) token: ")
         gl = gitlab.Gitlab(server, private_token=token, api_version="4")
 
     return gl
@@ -49,7 +51,7 @@ def download_path(
     package: gitlab.v4.objects.projects.Project,
     path: str,
     output: str | None = None,
-    ref: str = "main",
+    ref: str | None = None,
 ) -> None:
     """Downloads paths from gitlab, with an optional recurse.
 
@@ -78,11 +80,16 @@ def download_path(
 
     output = output or os.path.realpath(os.curdir)
 
+    # if the user did not specify a commit, branch or tag, use the default
+    # branch name of the project
+    ref = ref or package.default_branch
+
     logger.debug(
         'Downloading archive of "%s" from "%s"...',
         ref,
         package.attributes["path_with_namespace"],
     )
+
     archive = package.repository_archive(ref=ref)
     logger.debug("Archive has %d bytes", len(archive))
     logger.debug('Searching for "%s" within archive...', path)
@@ -96,40 +103,63 @@ def download_path(
         shutil.move(os.path.join(d, basedir, path), output)
 
 
-def _update_readme(readme: str, version: str | None) -> str:
-    """Inside text of the readme, replaces parts of the links to the provided
-    version. If version is not provided, replace to `stable` or `main`.
+def _update_readme(
+    contents: str,
+    version: str | None,
+    default_branch: str,
+) -> str:
+    """Updates README file text to make it release/latest ready.
+
+    Inside text of the readme, replaces parts of the links to the provided
+    version. If version is not provided, replace to `stable` or the default
+    project branch name.
 
     Arguments:
 
-        readme: Text of the README.rst file from a bob package
+        context: Text of the README.rst file from a package
 
         version: Format of the version string is '#.#.#'
+
+        default_branch: The name of the default project branch to use
 
     Returns:
 
         New text of readme with all replaces done
     """
 
-    # replace the badge in the readme's text with the given version
-    DOC_IMAGE = re.compile(
-        r"\-(available|master|main|latest|(v\d+\.\d+\.\d+([abc]\d+)?))\-"
-    )
-    BRANCH_RE = re.compile(r"/(stable|master|main|(v\d+\.\d+\.\d+([abc]\d+)?))")
+    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?))"
+    variants = {
+        "available",
+        "latest",
+        "main",
+        "master",
+        "stable",
+        default_branch,
+        pep440_version,
+    }
 
-    new_readme = []
-    for line in readme.splitlines():
+    # matches the graphical badge in the readme's text with the given version
+    DOC_IMAGE = re.compile(r"\-(" + "|".join(variants) + r")\-")
+
+    # matches all other occurences we need to handle
+    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")")
+
+    new_contents = []
+    for line in contents.splitlines():
         if BRANCH_RE.search(line) is not None:
             if "gitlab" in line:  # gitlab links
                 replacement = (
-                    "/v%s" % version if version is not None else "/main"
+                    "/v%s" % version
+                    if version is not None
+                    else f"/{default_branch}"
                 )
                 line = BRANCH_RE.sub(replacement, line)
-            if ("software/bob" in line) or (
-                "software/beat" in line
-            ):  # our doc server
+            if ("docs-latest" in line) or ("docs-stable" in line):
+                # our doc server
                 replacement = (
-                    "/v%s" % version if version is not None else "/main"
+                    "/v%s" % version
+                    if version is not None
+                    else f"/{default_branch}"
                 )
                 line = BRANCH_RE.sub(replacement, line)
         if DOC_IMAGE.search(line) is not None:
@@ -137,8 +167,78 @@ def _update_readme(readme: str, version: str | None) -> str:
                 "-v%s-" % version if version is not None else "-latest-"
             )
             line = DOC_IMAGE.sub(replacement, line)
-        new_readme.append(line)
-    return "\n".join(new_readme) + "\n"
+        new_contents.append(line)
+
+    return "\n".join(new_contents) + "\n"
+
+
+def _update_pyproject(
+    contents: str,
+    version: str | None,
+    default_branch: str,
+) -> str:
+    """Updates contents of pyproject.toml to make it release/latest ready.
+
+    Arguments:
+
+        context: Text of the ``pyproject.toml`` file from a package
+
+        version: Format of the version string is '#.#.#'
+
+        default_branch: The name of the default project branch to use
+
+    Returns:
+
+        New version of ``pyproject.toml`` with all replaces done
+    """
+
+    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?))"
+    variants = {
+        "available",
+        "latest",
+        "main",
+        "master",
+        "stable",
+        default_branch,
+        pep440_version,
+    }
+
+    data = tomli.loads(contents)
+
+    if re.search(pep440_version, data["project"]["version"]) is not None:
+
+        # sets the version
+        if version is None:
+            # just bump to the next beta
+            major, minor, patch = data["project"]["version"].split(".")
+            data["project"]["version"] = f"{major}.{minor}.{int(patch) + 1}b0"
+
+        else:
+            # set version passed by user
+            data["project"]["version"] = version
+
+    else:
+
+        logger.info(
+            f"Not setting project version on pyproject.toml as it is "
+            f"currently not PEP-440 compliant "
+            f"(value read: `{data['project']['version']}')"
+        )
+
+    # matches all other occurences we need to handle
+    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")")
+
+    # sets the various URLs
+    url = data["project"].get("urls", {}).get("documentation")
+    if (url is not None) and (BRANCH_RE.search(url) is not None):
+        replacement = (
+            "/v%s" % version if version is not None else f"/{default_branch}"
+        )
+        data["project"]["urls"]["documentation"] = BRANCH_RE.sub(
+            replacement, url
+        )
+
+    return tomli_w.dumps(data)
 
 
 def get_latest_tag_name(
@@ -292,14 +392,14 @@ def update_tag_comments(
     return tag
 
 
-def update_files_at_main(
+def update_files_at_defaul_branch(
     gitpkg: gitlab.v4.objects.projects.Project,
     files_dict: dict[str, str],
     message: str,
     dry_run: bool,
 ) -> None:
     """Update (via a commit) files of a given gitlab package, directly on the
-    main branch.
+    default project branch.
 
     Arguments:
 
@@ -312,7 +412,11 @@ def update_files_at_main(
         dry_run: If True, nothing will be committed or pushed to GitLab
     """
 
-    data = {"branch": "main", "commit_message": message, "actions": []}  # v4
+    data = {
+        "branch": gitpkg.default_branch,
+        "commit_message": message,
+        "actions": [],
+    }  # v4
 
     # add files to update
     for filename in files_dict.keys():
@@ -321,8 +425,9 @@ def update_files_at_main(
         data["actions"].append(update_action)  # type: ignore
 
     logger.debug(
-        "Committing changes in files (%s) to branch 'main'",
+        "Committing changes in files (%s) to branch '%s'",
         ", ".join(files_dict.keys()),
+        gitpkg.default_branch,
     )
     if not dry_run:
         commit = gitpkg.commits.create(data)
@@ -330,7 +435,7 @@ def update_files_at_main(
             "Created commit %s at %s (branch=%s)",
             commit.short_id,
             gitpkg.attributes["path_with_namespace"],
-            "main",
+            gitpkg.default_branch,
         )
 
 
@@ -447,9 +552,10 @@ def release_package(
 ) -> int | None:
     """Release package.
 
-    The provided tag will be annotated with a given list of comments.
-    README.rst and version.txt files will also be updated according to the
-    release procedures.
+    The provided tag will be annotated with a given list of comments. Files
+    such as ``README.md`` and ``pyproject.toml`` will be updated according to
+    the release procedures.
+
 
     Arguments:
 
@@ -471,13 +577,29 @@ def release_package(
     # 1. Replace branch tag in Readme to new tag, change version file to new
     # version tag. Add and commit to gitlab
     version_number = tag_name[1:]  # remove 'v' in front
-    readme_file = gitpkg.files.get(file_path="README.rst", ref="main")
-    readme_content = readme_file.decode().decode()
-    readme_content = _update_readme(readme_content, version_number)
+
+    readme_file = gitpkg.files.get(
+        file_path="README.md", ref=gitpkg.default_branch
+    )
+
+    readme_contents = readme_file.decode().decode()
+    readme_contents = _update_readme(
+        readme_contents, version_number, gitpkg.default_branch
+    )
+
+    pyproject_file = gitpkg.files.get(
+        file_path="pyproject.toml", ref=gitpkg.default_branch
+    )
+
+    pyproject_contents = pyproject_file.decode().decode()
+    pyproject_contents = _update_pyproject(
+        pyproject_contents, version_number, gitpkg.default_branch
+    )
+
     # commit and push changes
-    update_files_at_main(
+    update_files_at_defaul_branch(
         gitpkg,
-        {"README.rst": readme_content, "version.txt": version_number + "\n"},
+        {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased stable version to %s" % version_number,
         dry_run,
     )
@@ -493,7 +615,7 @@ def release_package(
         params = {
             "name": tag_name,
             "tag_name": tag_name,
-            "ref": "main",
+            "ref": gitpkg.default_branch,
         }
         if tag_comments:
             params["description"] = tag_comments
@@ -502,15 +624,18 @@ def release_package(
     # get the pipeline that is actually running with no skips
     running_pipeline = get_last_pipeline(gitpkg)
 
-    # 3. Replace branch tag in Readme to main, change version file to beta
-    # version tag. Git add, commit, and push.
-    readme_content = _update_readme(readme_content, None)
-    major, minor, patch = version_number.split(".")
-    version_number = f"{major}.{minor}.{int(patch) + 1}b0"
+    # 3. Replace branch tag in README back to default branch, change version
+    # file to beta version tag. Git add, commit, and push.
+    readme_contents = _update_readme(
+        readme_contents, None, gitpkg.default_branch
+    )
+    pyproject_contents = _update_pyproject(
+        pyproject_contents, None, gitpkg.default_branch
+    )
     # commit and push changes
-    update_files_at_main(
+    update_files_at_defaul_branch(
         gitpkg,
-        {"README.rst": readme_content, "version.txt": version_number + "\n"},
+        {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased latest version to %s [skip ci]" % version_number,
         dry_run,
     )

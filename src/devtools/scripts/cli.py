@@ -8,9 +8,11 @@ import click
 
 from ..click import AliasedGroup
 from .changelog import changelog
+from .dav import dav
 from .env import env
 from .fullenv import fullenv
 from .release import release
+from .update_pins import update_pins
 
 
 @click.group(
@@ -22,7 +24,9 @@ def cli():
     pass
 
 
+cli.add_command(changelog)
+cli.add_command(dav)
 cli.add_command(env)
 cli.add_command(fullenv)
-cli.add_command(changelog)
 cli.add_command(release)
+cli.add_command(update_pins)

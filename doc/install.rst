@@ -54,7 +54,7 @@ While developing using the command-line utility ``devtool``, one or more
 commands may require you pass the base directory of a development profile.
 
 You may set a number of development shortcuts by configuring the section
-``[profiles]`` on the file ``~/.devtoolrc``, like so:
+``[profiles]`` on the file ``~/.devtoolsrc``, like so:
 
 .. code-block:: toml
 
@@ -71,6 +71,29 @@ profile is available.
 Development profiles are typically shared via GitLab as independent
 repositories.  In this case, **it is your job to clone and ensure the profile
 is kept up-to-date with your group's development requirements.**
+
+
+.. _devtools.install.setup.webdav:
+
+Setting up Access to WebDAV
+===========================
+
+If you would like to use the WebDAV interface to our web service for manually
+uploading or modifying contents of files, you may also setup the address,
+username and password for that server inside the file ``~/.devtoolsrc``.  Here
+is a skeleton:
+
+.. code-block:: toml
+
+   [webdav]
+   server = "http://example.com"
+   username = "username"
+   password = "password"
+
+
+You may obtain these parameters from our internal page explaining the `WebDAV
+configuration <webdav_>`_.  For security reasons, you should also set ``chmod
+600`` to this file.
 
 
 .. _devtools.install.setup.gitlab:
