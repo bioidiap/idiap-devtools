@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import click
 
-from ..click import AliasedGroup
-from ..logging import setup
+from ...click import AliasedGroup
+from ...logging import setup
 from .changelog import changelog
 from .release import release
 

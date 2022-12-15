@@ -8,8 +8,8 @@ import typing
 
 import click
 
-from ..click import PreserveIndentCommand, verbosity_option
-from ..logging import setup
+from ...click import PreserveIndentCommand, verbosity_option
+from ...logging import setup
 
 logger = setup(__name__.split(".", 1)[0])
 
@@ -97,8 +97,8 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     import re
     import textwrap
 
-    from ..release import (
-        get_gitlab_instance,
+    from ...gitlab import get_gitlab_instance
+    from ...gitlab.release import (
         get_next_version,
         release_package,
         wait_for_pipeline_to_finish,

@@ -8,8 +8,8 @@ import sys
 
 import click
 
-from ..click import PreserveIndentCommand, verbosity_option
-from ..logging import setup
+from ...click import PreserveIndentCommand, verbosity_option
+from ...logging import setup
 
 logger = setup(__name__.split(".", 1)[0])
 
@@ -107,12 +107,12 @@ def changelog(target, output, mode, since, **_) -> None:
     import datetime
     import os
 
-    from ..changelog import (
+    from ...gitlab import get_gitlab_instance
+    from ...gitlab.changelog import (
         get_last_tag_date,
         parse_date,
         write_tags_with_commits,
     )
-    from ..release import get_gitlab_instance
 
     gl = get_gitlab_instance()
 
