@@ -59,7 +59,7 @@ def _make_conda_config(config, python, append_file, condarc_options):
             **condarc_options,
         )
 
-    retval.channel_urls = []
+    retval.channel_urls = []  # type: ignore
 
     for url in condarc_options["channels"]:
         # allow people to specify relative or absolute paths to local channels
@@ -72,7 +72,7 @@ def _make_conda_config(config, python, append_file, condarc_options):
                 )
             with _root_logger_protection():
                 url = url_path(url)
-        retval.channel_urls.append(url)
+        retval.channel_urls.append(url)  # type: ignore
 
     return retval
 
