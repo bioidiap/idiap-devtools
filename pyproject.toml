@@ -39,7 +39,7 @@ dependencies = [
     ]
 
 [project.urls]
-documentation = "https://www.idiap.ch/software/bob/docs/bob/devtools/master/"
+documentation = "https://www.idiap.ch/software/bob/docs/bob/devtools/main/"
 homepage = "https://pypi.org/project/devtools"
 repository = "https://gitlab.idiap.ch/bob/devtools"
 changelog = "https://gitlab.idiap.ch/bob/devtools/-/releases"
