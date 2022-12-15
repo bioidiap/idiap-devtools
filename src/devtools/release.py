@@ -9,9 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-import shutil
 import time
-import typing
 
 from distutils.version import StrictVersion
 
@@ -33,7 +31,7 @@ def get_gitlab_instance() -> gitlab.Gitlab:
             "idiap", [k for k in cfgs if os.path.exists(k)]
         )
     else:  # ask the user for a token or use one from the current runner
-        server = "https://gitlab.idiap.ch"
+        server = os.environ.get("CI_SERVER_URL", "https://gitlab.idiap.ch")
         token = os.environ.get("CI_JOB_TOKEN")
         if token is None:
             logger.debug(
@@ -41,66 +39,10 @@ def get_gitlab_instance() -> gitlab.Gitlab:
                 "Asking for user token on the command line...",
                 "|".join(cfgs),
             )
-            token = input(f"Your {server} (private) token: ")
+            token = input(f"{server} (private) token: ")
         gl = gitlab.Gitlab(server, private_token=token, api_version="4")
 
     return gl
-
-
-def download_path(
-    package: gitlab.v4.objects.projects.Project,
-    path: str,
-    output: str | None = None,
-    ref: str | None = None,
-) -> None:
-    """Downloads paths from gitlab, with an optional recurse.
-
-    This method will download an archive of the repository from chosen
-    reference, and then it will search inside the zip blob for the path to be
-    copied into output.  It uses :py:class:`zipfile.ZipFile` to do this search.
-    This method will not be very efficient for larger repository references,
-    but works recursively by default.
-
-    Arguments:
-
-      package: the gitlab package object to use (should be pre-fetched)
-
-      path: the path on the project to download
-
-      output: where to place the path to be downloaded - if not provided, use
-        the basename of ``path`` as storage point with respect to the current
-        directory
-
-      ref: the name of the git reference (branch, tag or commit hash) to use
-    """
-    import tarfile
-    import tempfile
-
-    from io import BytesIO
-
-    output = output or os.path.realpath(os.curdir)
-
-    # if the user did not specify a commit, branch or tag, use the default
-    # branch name of the project
-    ref = ref or package.default_branch
-
-    logger.debug(
-        'Downloading archive of "%s" from "%s"...',
-        ref,
-        package.attributes["path_with_namespace"],
-    )
-
-    archive = package.repository_archive(ref=ref)
-    logger.debug("Archive has %d bytes", len(archive))
-    logger.debug('Searching for "%s" within archive...', path)
-
-    with tempfile.TemporaryDirectory() as d:
-        with tarfile.open(fileobj=BytesIO(archive), mode="r:gz") as f:
-            f.extractall(path=d)
-
-        # move stuff to "output"
-        basedir = os.listdir(d)[0]
-        shutil.move(os.path.join(d, basedir, path), output)
 
 
 def _update_readme(
@@ -357,42 +299,7 @@ def get_next_version(
     return f"v{major}.{minor}.{patch_int+1}"
 
 
-def update_tag_comments(
-    gitpkg: gitlab.v4.objects.projects.Project,
-    tag_name: str,
-    tag_comments_list: typing.Iterable[str],
-    dry_run: bool = False,
-):
-    """Write annotations inside the provided tag of a given package.
-
-    Arguments:
-
-        gitpkg: gitlab package object
-
-        tag_name: The name of the tag to update
-
-        tag_comments_list: New annotations for this tag in a form of list
-
-        dry_run: If True, nothing will be committed or pushed to GitLab
-
-    Returns:
-
-        The gitlab object for the tag that was updated
-    """
-
-    # get tag and update its description
-    tag = gitpkg.releases.get(tag_name)
-    tag_comments = "\n".join(tag_comments_list)
-    logger.info(
-        "Found tag %s, updating its comments with:\n%s", tag.name, tag_comments
-    )
-    if not dry_run:
-        tag.description = tag_comments
-        tag.save()
-    return tag
-
-
-def update_files_at_defaul_branch(
+def _update_files_at_defaul_branch(
     gitpkg: gitlab.v4.objects.projects.Project,
     files_dict: dict[str, str],
     message: str,
@@ -439,7 +346,7 @@ def update_files_at_defaul_branch(
         )
 
 
-def get_last_pipeline(
+def _get_last_pipeline(
     gitpkg: gitlab.v4.objects.projects.Project,
 ) -> gitlab.v4.objects.pipelines.Pipeline:
     """Returns the last pipeline of the project.
@@ -480,7 +387,6 @@ def wait_for_pipeline_to_finish(
 
     sleep_step = 30
     max_sleep = 120 * 60  # two hours
-    # pipeline = get_last_pipeline(gitpkg, before_last=before_last)
 
     logger.warning(
         f"Waiting for the pipeline {pipeline_id} of "
@@ -527,7 +433,7 @@ def wait_for_pipeline_to_finish(
     )
 
 
-def cancel_last_pipeline(gitpkg: gitlab.v4.objects.projects.Project) -> None:
+def _cancel_last_pipeline(gitpkg: gitlab.v4.objects.projects.Project) -> None:
     """Cancel the last started pipeline of a package.
 
     Arguments:
@@ -535,7 +441,7 @@ def cancel_last_pipeline(gitpkg: gitlab.v4.objects.projects.Project) -> None:
         gitpkg: gitlab package object
     """
 
-    pipeline = get_last_pipeline(gitpkg)
+    pipeline = _get_last_pipeline(gitpkg)
     logger.info(
         "Cancelling the last pipeline %s of project %s",
         pipeline.id,
@@ -597,7 +503,7 @@ def release_package(
     )
 
     # commit and push changes
-    update_files_at_defaul_branch(
+    _update_files_at_defaul_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased stable version to %s" % version_number,
@@ -606,7 +512,7 @@ def release_package(
 
     if not dry_run:
         # cancel running the pipeline triggered by the last commit
-        cancel_last_pipeline(gitpkg)
+        _cancel_last_pipeline(gitpkg)
 
     # 2. Tag package with new tag and push
     logger.info('Tagging "%s"', tag_name)
@@ -622,7 +528,7 @@ def release_package(
         gitpkg.releases.create(params)
 
     # get the pipeline that is actually running with no skips
-    running_pipeline = get_last_pipeline(gitpkg)
+    running_pipeline = _get_last_pipeline(gitpkg)
 
     # 3. Replace branch tag in README back to default branch, change version
     # file to beta version tag. Git add, commit, and push.
@@ -633,7 +539,7 @@ def release_package(
         pyproject_contents, None, gitpkg.default_branch
     )
     # commit and push changes
-    update_files_at_defaul_branch(
+    _update_files_at_defaul_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased latest version to %s [skip ci]" % version_number,

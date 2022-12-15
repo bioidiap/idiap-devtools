@@ -20,8 +20,8 @@ Usage
 
 Releasing a package is a 2-step process:
 
-1. Generate a changelog using ``devtool changelog``.
-2. Create a new GitLab release using ``devtool release``
+1. Generate a changelog using ``devtool gitlab changelog``.
+2. Create a new GitLab release using ``devtool gitlab release``
 
 Use the ``--help`` flag in each command to learn more about each phase.
 
@@ -37,7 +37,7 @@ Use the ``--help`` flag in each command to learn more about each phase.
 Create the Changelogs
 =====================
 
-Use the subcommand ``devtool changelog <group>/<package>`` to generate a
+Use the subcommand ``devtool gitlab changelog <group>/<package>`` to generate a
 changelog.  Follow examples and instructions at :ref:`devtools.cli`.  Notice
 this command interacts *directly* with GitLab and does **not** require, or use,
 a local checkout of the package.
@@ -67,7 +67,7 @@ Release the Package
 ===================
 
 Once the changelog is ready, to release the package, use the command ``devtool
-release``.  Follow examples and instructions at :ref:`devtools.cli`.  The
+gitlab release``.  Follow examples and instructions at :ref:`devtools.cli`.  The
 process is completely automated and documented at that page.
 
 

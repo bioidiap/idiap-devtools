@@ -23,7 +23,7 @@ Examples:
 
      .. code:: sh
 
-        $ devtool release -vv changelog.md
+        $ devtool gitlab release -vv changelog.md
 
      .. tip::
 
@@ -35,7 +35,7 @@ Examples:
 
      .. code:: sh
 
-        $ devtool release -vv changelog.md
+        $ devtool gitlab release -vv changelog.md
 
 """,
 )

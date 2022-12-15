@@ -24,34 +24,34 @@ Examples:
 
      .. code:: sh
 
-        devtool changelog -vv group/package.xyz -o changelog.md
+        devtool gitlab changelog -vv group/package.xyz -o changelog.md
 
   2. The same as above, but dumps the changelog to stdout instead of a file:
 
      .. code:: sh
 
-        devtool changelog -vv group/package.xyz
+        devtool gitlab changelog -vv group/package.xyz
 
   3. Generates the changelog for a single package looking at commits
      (not merge requests):
 
      .. code:: sh
 
-        devtool changelog -vv --mode=commits group/package.xyz
+        devtool gitlab changelog -vv --mode=commits group/package.xyz
 
   4. Generates the changelog for a single package looking at merge requests
      starting from a given date of January 1, 2016:
 
      .. code:: sh
 
-        $ devtool changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
+        $ devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
 
   5. Generates the changelog for a set of packages, listed one per line in a
      text file:
 
      .. code:: sh
 
-        $ devtool changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
+        $ devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
 
 """,
 )
