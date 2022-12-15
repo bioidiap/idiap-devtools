@@ -385,24 +385,32 @@ def env(
 
     # 2. loads all conda package data, reset "meta" to remove consumed entries
     conda_config = the_profile.conda_config(python, public, stable)
-    meta, conda_parsed, conda_packages = _load_conda_packages(
+    leftover_meta, conda_parsed, conda_packages = _load_conda_packages(
         meta, conda_config
     )
     # 3. loads all python package data, reset "meta" to remove consumed entries
-    meta, python_packages, extra_conda_packages = _load_python_packages(
-        the_profile, python, meta, conda_parsed + conda_packages
+    (
+        leftover_meta,
+        python_packages,
+        extra_conda_packages,
+    ) = _load_python_packages(
+        the_profile, python, leftover_meta, conda_parsed + conda_packages
     )
 
     # At this point, there shouldn't be anything else to consume
-    if meta:
+    if leftover_meta:
         logger.error(
             f"Ended parsing with unconsumed entries from the command-line: "
-            f"{' ,'.join(meta)}"
+            f"{' ,'.join(leftover_meta)}"
         )
 
     # Adds python on the required version
     conda_packages.append(f"python {python}")
     conda_packages += extra_conda_packages
+
+    # Always append pip, if that is not the case already
+    # we need it for the own package installation later on
+    conda_packages.append("pip")
 
     # Performs "easy" simplification: if a package appears in two entries,
     # however one of them is a pin, keep only the pin
@@ -417,8 +425,6 @@ def env(
     data: dict[str, typing.Any] = dict(channels=conda_config.channels)
 
     if python_packages:
-        # must install "pip"
-        conda_packages.append("pip")
         conda_packages.append(
             dict(  # type: ignore
                 pip=the_profile.python_indexes(public, stable) + python_packages
@@ -437,8 +443,16 @@ def env(
     with open(output, "w") as f:
         yaml.dump(data, f)
 
-    click.secho(
-        f"Run 'mamba env create -n dev -f {output}' to create environment",
-        fg="yellow",
-        bold=True,
+    click.echo(
+        "Run the following commands to create and prepare your development environment:"
     )
+    install_cmds = [
+        f"mamba env create --force -n dev -f {output}",
+        "conda activate dev",
+    ]
+    for k in meta:
+        install_cmds.append(
+            f"pip install --no-build-isolation --no-dependencies --editable {k}",
+        )
+    for k in install_cmds:
+        click.secho(k, fg="yellow", bold=True)

@@ -127,8 +127,12 @@ def fullenv(
     with open(output, "w") as f:
         yaml.dump(data, f)
 
-    click.secho(
-        f"Run 'mamba env create -n dev -f {output}' to create environment",
-        fg="yellow",
-        bold=True,
+    click.echo(
+        "Run the following commands to create and prepare your development environment:"
     )
+    install_cmds = [
+        f"mamba env create --force -n dev -f {output}",
+        "conda activate dev",
+    ]
+    for k in install_cmds:
+        click.secho(k, fg="yellow", bold=True)
