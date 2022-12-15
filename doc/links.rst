@@ -17,6 +17,7 @@
 .. _gitlab-token: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
 .. _cookiecutter: https://cookiecutter.readthedocs.io
 .. _cookiecutter-template: https://gitlab.idiap.ch/bob/cookiecutter-pypackage
+.. _semantic version numbers: https://semver.org
 
 .. _pip: https://pip.pypa.io/en/stable/
 .. _pip-e: https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-e
