@@ -21,8 +21,13 @@ This section includes information for using the Python API of
    devtools.profile
    devtools.python
    devtools.utils
-   devtools.changelog
-   devtools.release
+
+.. autosummary::
+   :toctree: api/gitlab
+
+   devtools.gitlab
+   devtools.gitlab.changelog
+   devtools.gitlab.release
 
 
 .. include:: links.rst
