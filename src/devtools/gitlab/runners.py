@@ -23,12 +23,12 @@ def get_runner_from_description(
 
         gl: gitlab service instance
 
-        str: the runner description
+        descr: the runner description
 
 
     Returns:
 
-        runner: the runner object, if one is found matching the description
+        The runner object, if one is found matching the description
 
 
     Raises:
