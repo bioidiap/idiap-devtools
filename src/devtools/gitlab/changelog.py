@@ -107,7 +107,7 @@ def get_file_from_gitlab(
         A string I/O object you can use like a file.
     """
 
-    return io.StringIO(gitpkg.files.get(file_path=path, ref=ref).decode())
+    return io.StringIO(gitpkg.files.get(file_path=path, ref=ref).encode())
 
 
 def get_last_tag_date(

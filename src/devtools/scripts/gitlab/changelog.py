@@ -44,14 +44,14 @@ Examples:
 
      .. code:: sh
 
-        $ devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
+        devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
 
   5. Generates the changelog for a set of packages, listed one per line in a
      text file:
 
      .. code:: sh
 
-        $ devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
+        devtool gitlab changelog -vv --mode=mrs --since=2016-01-01 group/package.xyz
 
 """,
 )

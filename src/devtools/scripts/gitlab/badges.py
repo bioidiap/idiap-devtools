@@ -97,9 +97,11 @@ Examples:
   1. Creates (by replacing) all existing badges in a gitlab project
      (bob/bob.devtools):
 
-     $ devtool gitlab badges bob/devtools
+     .. code:: sh
 
-     N.B.: This command also affects the README.md file.
+        devtool gitlab badges bob/devtools
+
+   .. note:: This command also affects the README.md file.
 
 """,
 )

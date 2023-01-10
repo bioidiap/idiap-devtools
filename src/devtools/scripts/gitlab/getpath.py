@@ -24,10 +24,10 @@ Examples:
         devtool gitlab getpath bob/dev-profile profile.toml
 
 
-  3. Get the directory ``gitlab`` (and eventual sub-directories) from
+  2. Get the directory ``gitlab`` (and eventual sub-directories) from
      bob/dev-profile:
 
-     .. code::sh
+     .. code:: sh
 
         devtool gitlab getpath bob/bob.admin master gitlab _ci
 
