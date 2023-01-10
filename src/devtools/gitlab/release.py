@@ -13,6 +13,7 @@ import time
 from distutils.version import StrictVersion
 
 import gitlab
+import gitlab.v4.objects
 import tomli
 import tomli_w
 
@@ -273,7 +274,7 @@ def get_next_version(
     return f"v{major}.{minor}.{patch_int+1}"
 
 
-def _update_files_at_defaul_branch(
+def update_files_at_defaul_branch(
     gitpkg: gitlab.v4.objects.projects.Project,
     files_dict: dict[str, str],
     message: str,
@@ -477,7 +478,7 @@ def release_package(
     )
 
     # commit and push changes
-    _update_files_at_defaul_branch(
+    update_files_at_defaul_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased stable version to %s" % version_number,
@@ -513,7 +514,7 @@ def release_package(
         pyproject_contents, None, gitpkg.default_branch
     )
     # commit and push changes
-    _update_files_at_defaul_branch(
+    update_files_at_defaul_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased latest version to %s [skip ci]" % version_number,

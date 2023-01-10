@@ -8,8 +8,14 @@ import click
 
 from ...click import AliasedGroup
 from ...logging import setup
+from .badges import badges
 from .changelog import changelog
+from .getpath import getpath
+from .jobs import jobs
+from .lasttag import lasttag
 from .release import release
+from .runners import runners
+from .settings import settings
 
 logger = setup(__name__.split(".", 1)[0])
 
@@ -29,3 +35,9 @@ def gitlab() -> None:
 
 gitlab.add_command(changelog)
 gitlab.add_command(release)
+gitlab.add_command(badges)
+gitlab.add_command(runners)
+gitlab.add_command(jobs)
+gitlab.add_command(getpath)
+gitlab.add_command(lasttag)
+gitlab.add_command(settings)

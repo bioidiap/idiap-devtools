@@ -23,7 +23,7 @@ Examples:
 
      .. code:: sh
 
-        $ devtool gitlab release -vv changelog.md
+        devtool gitlab release -vv changelog.md
 
      .. tip::
 
@@ -35,7 +35,7 @@ Examples:
 
      .. code:: sh
 
-        $ devtool gitlab release -vv changelog.md
+        devtool gitlab release -vv changelog.md
 
 """,
 )
@@ -120,10 +120,11 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
         (line, k) for k, line in enumerate(changelogs) if header_re.match(line)
     ]
 
-    # if we are in a dry-run mode, let's let it be known
     if dry_run:
-        logger.warning("#### DRY RUN MODE ####")
-        logger.warning("N.B.: No changes will be committed to GitLab.")
+        click.secho("!!!! DRY RUN MODE !!!!", fg="yellow", bold=True)
+        click.secho(
+            "No changes will be committed to GitLab.", fg="yellow", bold=True
+        )
 
     for pkg_number, (header, line) in enumerate(pkgs):
 

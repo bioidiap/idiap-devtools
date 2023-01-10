@@ -14,6 +14,7 @@ import typing
 
 import dateutil.parser
 import gitlab
+import gitlab.v4.objects
 import pytz
 
 logger = logging.getLogger(__name__)
