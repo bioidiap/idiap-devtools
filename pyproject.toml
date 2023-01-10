@@ -14,8 +14,7 @@ description = "This package contains a *pot-pourri* of various tools required to
 dynamic = ["readme"]
 license = {text = "BSD 3-Clause License"}
 authors = [
-  {name = "Andre Anjos"},
-  {email = "andre.anjos@idiap.ch"},
+  {name = "Andre Anjos", email = "andre.anjos@idiap.ch"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
