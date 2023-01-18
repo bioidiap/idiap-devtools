@@ -42,6 +42,7 @@ requirements:
     - python-gitlab
     - python-dateutil
     - setuptools
+    - xdg
 
 test:
   imports:
