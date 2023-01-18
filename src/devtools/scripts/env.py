@@ -350,7 +350,8 @@ Examples:
     "-o",
     "--output",
     default="environment.yaml",
-    help="The name of the environment plan",
+    show_default=True,
+    help="The name of the environment plan file",
 )
 @verbosity_option(logger=logger)
 def env(

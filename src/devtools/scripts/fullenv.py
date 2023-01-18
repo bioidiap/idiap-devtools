@@ -14,7 +14,40 @@ from ..logging import setup
 logger = setup(__name__.split(".", 1)[0])
 
 
-@click.command(cls=PreserveIndentCommand)
+@click.command(
+    cls=PreserveIndentCommand,
+    epilog="""
+Examples:
+
+  1. Creates a development environment with all constrained packages (assumes
+     the ``default`` profile is configured):
+
+    .. code:: sh
+
+       $ conda activate base
+       (base) $ devtool fullenv -vv
+       (base) $ mamba env create -n dev -f environment.yaml
+       (base) $ conda activate dev
+
+  2. Creates a development environment with a specific profile:
+
+    .. code:: sh
+
+       $ conda activate base
+       (base) $ devtool fullenv -vv -P ../profile
+       (base) $ mamba env create -n dev -f environment.yaml
+       (base) $ conda activate dev
+
+
+  .. tip::
+
+     You may hand-edit the output file ``environment.yaml`` to adjust for
+     details, add conda or Python packages you'd like to complement your work
+     environment.  An example would be adding debuggers such as ``ipdb`` to
+     the installation plan before calling ``mamba env create``.
+
+""",
+)
 @click.option(
     "-P",
     "--profile",
@@ -44,7 +77,8 @@ logger = setup(__name__.split(".", 1)[0])
     "-o",
     "--output",
     default="environment.yaml",
-    help="The name of the environment plan",
+    show_default=True,
+    help="The name of the environment plan file",
 )
 @verbosity_option(logger=logger)
 def fullenv(
@@ -54,20 +88,7 @@ def fullenv(
     output,
     **_,
 ) -> None:
-    """Creates a development environment with all constrained packages.
-
-    .. code:: sh
-
-       $ conda activate base
-       (base) $ devtool fullenv -vv ../profile
-       (base) $ mamba env create -n dev -f environment.yaml
-       (base) $ conda activate dev
-
-    You may, of course, hand-edit the output file ``environment.yaml`` to
-    adjust for details, add conda or Python packages you'd like to complement
-    your work environment.  An example would be adding debuggers such as
-    ``ipdb`` to the installation plan before calling ``mamba env create``.
-    """
+    """Creates a development environment with all constrained packages."""
 
     import os
     import typing
