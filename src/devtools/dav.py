@@ -12,8 +12,6 @@ import pathlib
 import tomli
 import webdav3.client
 
-from .profile import _USER_CONFIGURATION
-
 logger = logging.getLogger(__name__)
 
 
@@ -39,10 +37,12 @@ def _setup_webdav_client(
 def _get_config():
     """Returns a dictionary with server parameters, or ask them to the user."""
 
+    from .profile import USER_CONFIGURATION
+
     # tries to figure if we can authenticate using a configuration file
 
-    if os.path.exists(_USER_CONFIGURATION):
-        with open(_USER_CONFIGURATION, "rb") as f:
+    if os.path.exists(USER_CONFIGURATION):
+        with open(USER_CONFIGURATION, "rb") as f:
             data = tomli.load(f)
     else:
         data = {}
