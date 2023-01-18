@@ -26,11 +26,11 @@ def dependencies_from_pyproject_toml(
 
     data = tomli.load(open(path, "rb"))
 
-    deps = data["project"].get("dependencies", [])
-    optional_deps = data["project"].get("optional-dependencies", {})
+    deps = data.get("project", {}).get("dependencies", [])
+    optional_deps = data.get("project", {}).get("optional-dependencies", {})
 
     retval = list(pkg_resources.parse_requirements(deps))
     for v in optional_deps.values():
         retval += list(pkg_resources.parse_requirements(v))
 
-    return data["project"]["name"], retval
+    return data.get("project", {}).get("name", "UNKNOWN"), retval
