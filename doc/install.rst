@@ -54,7 +54,7 @@ While developing using the command-line utility ``devtool``, one or more
 commands may require you pass the base directory of a development profile.
 
 You may set a number of development shortcuts by configuring the section
-``[profiles]`` on the file ``~/.devtoolsrc``, like so:
+``[profiles]`` on the file ``~/.config/devtools.toml``, like so:
 
 .. code-block:: toml
 
@@ -62,6 +62,11 @@ You may set a number of development shortcuts by configuring the section
    default = "bob"
    bob = "~/dev-profiles/bob"
    custom = "~/dev-profiles/custom-profile"
+
+.. note::
+
+   The location of the configuration file respects ``${XDG_CONFIG_HOME}``,
+   which defaults to ``~/.config`` in typical UNIX-style operating systems.
 
 The special ``default`` entry refers to one of the other entries in this
 section, and determines the default profile to use, if none is passed on the
@@ -80,8 +85,8 @@ Setting up Access to WebDAV
 
 If you would like to use the WebDAV interface to our web service for manually
 uploading or modifying contents of files, you may also setup the address,
-username and password for that server inside the file ``~/.devtoolsrc``.  Here
-is a skeleton:
+username and password for that server inside the user configuration file
+(typically, ``~/.config/devtools.toml``).  Here is a skeleton:
 
 .. code-block:: toml
 
