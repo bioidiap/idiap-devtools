@@ -61,6 +61,9 @@ def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
     # if you get to this point, then no local directory with that name exists
     # check the user configuration for a specific key
     if os.path.exists(USER_CONFIGURATION):
+        logger.debug(
+            f"Loading user-configuration from {str(USER_CONFIGURATION)}..."
+        )
         with open(USER_CONFIGURATION, "rb") as f:
             usercfg = tomli.load(f)
     else:
