@@ -12,6 +12,7 @@ import typing
 import conda_build.config
 import pkg_resources
 import tomli
+import xdg
 import yaml
 
 from .logging import setup
@@ -19,7 +20,8 @@ from .logging import setup
 logger = setup(__name__)
 
 
-_USER_CONFIGURATION = pathlib.Path(os.path.expanduser("~/.devtoolsrc"))
+USER_CONFIGURATION = xdg.xdg_config_home() / "devtools.toml"
+"""The default location for the user configuration file"""
 
 
 def load(dir: pathlib.Path) -> dict[str, typing.Any]:
@@ -58,8 +60,8 @@ def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
 
     # if you get to this point, then no local directory with that name exists
     # check the user configuration for a specific key
-    if os.path.exists(_USER_CONFIGURATION):
-        with open(_USER_CONFIGURATION, "rb") as f:
+    if os.path.exists(USER_CONFIGURATION):
+        with open(USER_CONFIGURATION, "rb") as f:
             usercfg = tomli.load(f)
     else:
         usercfg = {}

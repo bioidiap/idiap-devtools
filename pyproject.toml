@@ -35,6 +35,7 @@ dependencies = [
     "tomli",
     "tomli-w",
     "webdavclient3",
+    "xdg",
     ]
 
 [project.urls]
