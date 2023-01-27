@@ -18,7 +18,6 @@ This section includes information for using the Python API of
    devtools
    devtools.click
    devtools.conda
-   devtools.dav
    devtools.logging
    devtools.profile
    devtools.python
