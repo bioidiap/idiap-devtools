@@ -7,7 +7,6 @@ from __future__ import annotations
 import click
 
 from ..click import AliasedGroup
-from .dav import dav
 from .env import env
 from .fullenv import fullenv
 from .gitlab import gitlab
@@ -23,7 +22,6 @@ def cli():
     pass
 
 
-cli.add_command(dav)
 cli.add_command(env)
 cli.add_command(fullenv)
 cli.add_command(gitlab)
