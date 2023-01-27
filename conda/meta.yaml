@@ -37,6 +37,7 @@ requirements:
     - tomli-w
     - cookiecutter
     - webdavclient3
+    - packaging
     - pyyaml
     - gitpython
     - python-gitlab

@@ -28,6 +28,7 @@ dependencies = [
     "click>=8",
     "cookiecutter",
     "gitpython",
+    "packaging",
     "python-dateutil",
     "python-gitlab",
     "pyyaml",

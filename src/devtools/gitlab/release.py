@@ -44,7 +44,7 @@ def _update_readme(
         New text of readme with all replaces done
     """
 
-    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?))"
+    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?)"
     variants = {
         "available",
         "latest",
@@ -109,7 +109,7 @@ def _update_pyproject(
         New version of ``pyproject.toml`` with all replaces done
     """
 
-    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?))"
+    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?)"
     variants = {
         "available",
         "latest",
