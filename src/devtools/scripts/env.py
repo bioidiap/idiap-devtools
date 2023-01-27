@@ -442,7 +442,9 @@ def env(
         os.rename(output, backup)
 
     with open(output, "w") as f:
-        yaml.dump(data, f)
+        import math
+
+        yaml.dump(data, f, width=math.inf)
 
     click.echo(
         "Run the following commands to create and prepare your development environment:"
