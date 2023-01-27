@@ -35,7 +35,7 @@ Examples:
 
      .. code:: sh
 
-        devtool gitlab release -vv changelog.md
+        devtool gitlab release -vv --dry-run changelog.md
 
 """,
 )
@@ -97,6 +97,8 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     import re
     import textwrap
 
+    import packaging.version
+
     from ...gitlab import get_gitlab_instance
     from ...gitlab.release import (
         get_next_version,
@@ -135,13 +137,9 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
         pkg = match.groupdict()["pkg"]
         bump = match.groupdict()["bump"]
 
-        logger.info(
-            f"Processing package {pkg} to perform a {bump} release bump"
-        )
-
         # gets the description for this package depending if that is the last
         # package listed, or not
-        if pkg_number < len(pkgs):
+        if pkg_number < (len(pkgs) - 1):
             description = changelogs[(line + 1) : pkgs[pkg_number + 1][1]]
         else:
             description = changelogs[(line + 1) :]
@@ -161,17 +159,34 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
             f"(id={use_package.id})",
         )
 
-        # gets the "next" tag for this package
-        tag = get_next_version(use_package, bump)
-        logger.info(
-            f"Bumping version of "
-            f"use_package.attributes['path_with_namespace'] "
-            f"to {tag}",
-        )
+        # process the "bump" to be performed
+        tag = bump.strip().lower()
+        if isinstance(packaging.version.parse(tag), packaging.version.Version):
+            vtag = f"v{tag}"
+            logger.info(f"Tagging package {pkg} to {vtag} (forced)")
+
+        elif tag in ("patch", "minor", "major"):
+            logger.info(
+                f"Processing package {pkg} to perform a {tag} release bump"
+            )
+
+            # gets the "next" tag for this package
+            vtag = get_next_version(use_package, bump)
+            logger.info(
+                f"Bumping version of "
+                f"use_package.attributes['path_with_namespace'] "
+                f"to {vtag}",
+            )
+        else:
+            raise RuntimeError(
+                f"Cannot process tag {tag}: the value should be one of patch, "
+                f"minor, or major, or a valid PEP-440 version number (to "
+                f"force a tag)"
+            )
 
         # release the package with the found tag and its comments
         pipeline_id = release_package(
-            use_package, tag, description_text, dry_run
+            use_package, vtag, description_text, dry_run
         )
         # now, wait for the pipeline to finish, before we can release the
         # next package
