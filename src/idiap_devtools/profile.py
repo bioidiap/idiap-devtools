@@ -32,7 +32,7 @@ def load(dir: pathlib.Path) -> dict[str, typing.Any]:
         return tomli.load(f)
 
 
-def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
+def get_profile_path(name: str | pathlib.Path) -> pathlib.Path | None:
     """Returns the local directory of the named profile.
 
     If the input name corresponds to an existing directory, then that is
@@ -100,21 +100,26 @@ class Profile:
 
     Arguments:
 
-        path: A directory, containing the file ``profile.toml``, defining the
-            development profile.
+        path: The name of the local profile to return - can be either an
+            existing path, or any name from the user configuration file.
     """
 
     data: dict[str, typing.Any]  #: A readout of the ``profile.toml`` file
     _basedir: pathlib.Path
 
-    def __init__(self, path: str | pathlib.Path):
-        basedir = get_path(path)
+    def __init__(self, name: str | pathlib.Path):
+        basedir = get_profile_path(name)
         if basedir is None:
             raise FileNotFoundError(
                 f"Cannot find `profile.toml' in the input "
-                f"profile path or key: {path}"
+                f"profile path or key: `{name}' (resolved to `{basedir}')"
             )
         self._basedir = basedir
+        __import__("ipdb").set_trace()
+        logger.info(
+            f"Loading development profile from `{name}' "
+            f"(resolved to `{basedir}')..."
+        )
         with (self._basedir / "profile.toml").open("rb") as f:
             self.data = tomli.load(f)
 

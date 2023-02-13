@@ -9,7 +9,7 @@ import typing
 
 import click
 
-from .profile import get_path as get_profile_path
+from .profile import get_profile_path
 
 
 def verbosity_option(
