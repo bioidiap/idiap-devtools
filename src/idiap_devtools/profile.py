@@ -115,7 +115,6 @@ class Profile:
                 f"profile path or key: `{name}' (resolved to `{basedir}')"
             )
         self._basedir = basedir
-        __import__("ipdb").set_trace()
         logger.info(
             f"Loading development profile from `{name}' "
             f"(resolved to `{basedir}')..."
