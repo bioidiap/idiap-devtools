@@ -38,7 +38,7 @@ Create the Changelogs
 =====================
 
 Use the subcommand ``devtool gitlab changelog <group>/<package>`` to generate a
-changelog.  Follow examples and instructions at :ref:`idiap_devtools.cli`.
+changelog.  Follow examples and instructions at :ref:`idiap-devtools.cli`.
 Notice this command interacts *directly* with GitLab and does **not** require,
 or use, a local checkout of the package.
 
@@ -68,7 +68,7 @@ Release the Package
 
 Once the changelog is ready, to release the package, use the command ``devtool
 gitlab release``.  Follow examples and instructions at
-:ref:`idiap_devtools.cli`.  The process is completely automated and documented
+:ref:`idiap-devtools.cli`.  The process is completely automated and documented
 at that page.
 
 
