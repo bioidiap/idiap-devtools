@@ -65,7 +65,6 @@ def enable(name, targets, group, dry_run, **_) -> None:
     and files containing list of projects to enable at certain runner
     at.
     """
-
     import pathlib
 
     from ...gitlab import get_gitlab_instance
@@ -83,7 +82,6 @@ def enable(name, targets, group, dry_run, **_) -> None:
 
     packages = []
     for target in targets:
-
         if os.path.exists(target):  # it is a file with project names
             packages += get_projects_from_file(gl, pathlib.Path(target))
 
@@ -94,9 +92,7 @@ def enable(name, targets, group, dry_run, **_) -> None:
             packages += get_projects_from_group(gl, target)
 
     for k in packages:
-
         try:
-
             logger.info(
                 "Processing project %s (id=%d)",
                 k.attributes["path_with_namespace"],
@@ -147,18 +143,19 @@ def enable(name, targets, group, dry_run, **_) -> None:
     epilog="""
 Examples:
 
-  1. Disables the runner with description "macmini" in project bob/bob and bob/conda:
+  1. Disables the runner with description "macmini" in project software/clapp
+     and software/auto-intersphinx:
 
      .. code:: sh
 
-        devtool gitlab runners disable -vv macmini bob/bob bob/conda
+        devtool gitlab runners disable -vv macmini software/clapp software/auto-intersphinx
 
 
-  1. Disables the runner with description "macmini" for all projects in group bob:
+  1. Disables the runner with description "macmini" for all projects in group software:
 
      .. code:: sh
 
-        devtool gitlab runners disable -vv macmini bob
+        devtool gitlab runners disable -vv macmini software
 
 
   2. Disables the runner with description "macpro" on all projects it is
@@ -189,7 +186,6 @@ def disable(name, targets, dry_run, **_) -> None:
     files containing list of projects to load or omit the last argument,
     in which case all projects using this runner will be affected.
     """
-
     import pathlib
 
     from ...gitlab import get_gitlab_instance
@@ -223,7 +219,6 @@ def disable(name, targets, dry_run, **_) -> None:
 
     for k in packages:
         try:
-
             logger.info(
                 "Processing project %s (id=%d)",
                 k.attributes["path_with_namespace"],
@@ -286,7 +281,6 @@ Examples:
 @verbosity_option(logger=logger)
 def list(name, **_) -> None:
     """Lists projects a runner is associated to."""
-
     from ...gitlab import get_gitlab_instance
     from ...gitlab.runners import get_runner_from_description
 

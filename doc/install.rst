@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-.. _devtools.install:
+.. _idiap-devtools.install:
 
 ==============
  Installation
@@ -16,7 +16,7 @@ package using one of the methods below:
 
    .. code-block:: sh
 
-      mamba install -n base -c https://www.idiap.ch/software/bob/conda/label/beta -c conda-forge devtools
+      mamba install -n base -c https://www.idiap.ch/software/biosignal/conda/label/beta -c conda-forge idiap-devtools
 
 
 .. tab:: pip
@@ -28,15 +28,15 @@ package using one of the methods below:
 
    .. code-block:: sh
 
-      conda activate base && pip install git+https://gitlab.idiap.ch/bob/devtools
+      conda activate base && pip install git+https://gitlab.idiap.ch/software/idiap-devtools
 
 
-.. _devtools.install.setup:
+.. _idiap-devtools.install.setup:
 
 Setup
 -----
 
-.. _devtools.install.setup.profile:
+.. _idiap-devtools.install.setup.profile:
 
 Setting up Development Profiles
 ===============================
@@ -48,18 +48,22 @@ constraints (package pinnings).  Development profiles are GitLab repositories,
 organized in a specific way, and potentially used by various development,
 continuous integration, and administrative tools.  Some examples:
 
+* Software's group: https://gitlab.idiap.ch/software/dev-profile
+* Biosignal's group: https://gitlab.idiap.ch/biosignal/dev-profile
 * Bob's group: https://gitlab.idiap.ch/bob/dev-profile
 
 While developing using the command-line utility ``devtool``, one or more
 commands may require you pass the base directory of a development profile.
 
 You may set a number of development shortcuts by configuring the section
-``[profiles]`` on the file ``~/.config/devtools.toml``, like so:
+``[profiles]`` on the file ``~/.config/idiap-devtools.toml``, like so:
 
 .. code-block:: toml
 
    [profiles]
-   default = "bob"
+   default = "software"
+   software = "~/dev-profiles/software"
+   biosignal = "~/dev-profiles/biosignal"
    bob = "~/dev-profiles/bob"
    custom = "~/dev-profiles/custom-profile"
 
@@ -78,7 +82,7 @@ repositories.  In this case, **it is your job to clone and ensure the profile
 is kept up-to-date with your group's development requirements.**
 
 
-.. _devtools.install.setup.gitlab:
+.. _idiap-devtools.install.setup.gitlab:
 
 Automated GitLab interaction
 ============================

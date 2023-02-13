@@ -19,14 +19,15 @@ from .logging import setup
 
 logger = setup(__name__)
 
+OLD_USER_CONFIGURATION = xdg.xdg_config_home() / "devtools.toml"
+"""The previous default location for the user configuration file."""
 
-USER_CONFIGURATION = xdg.xdg_config_home() / "devtools.toml"
-"""The default location for the user configuration file"""
+USER_CONFIGURATION = xdg.xdg_config_home() / "idiap-devtools.toml"
+"""The default location for the user configuration file."""
 
 
 def load(dir: pathlib.Path) -> dict[str, typing.Any]:
     """Loads a profile TOML file, returns a dictionary with contents."""
-
     with (dir / "profile.toml").open("rb") as f:
         return tomli.load(f)
 
@@ -51,12 +52,19 @@ def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
         Either ``None``, if the profile cannot be found, or a verified path, if
         one is found.
     """
-
     path = pathlib.Path(name)
 
     if path.exists() and os.path.isdir(path):
         logger.debug(f"Returning path to profile {str(path)}...")
         return path
+
+    # makes the user move the configuration file quickly!
+    if os.path.exists(OLD_USER_CONFIGURATION):
+        raise RuntimeError(
+            f"Move your configuration from "
+            f"{str(OLD_USER_CONFIGURATION)} to {str(USER_CONFIGURATION)}, "
+            f"and then re-run this application."
+        )
 
     # if you get to this point, then no local directory with that name exists
     # check the user configuration for a specific key
@@ -285,7 +293,6 @@ class Profile:
             python: The python version in the format "X.Y" (e.g. "3.9" or
                "3.10")
         """
-
         content = self.get_file_contents(("conda", "constraints"))
 
         if content is None:
@@ -312,7 +319,6 @@ class Profile:
 
     def python_constraints(self) -> list[pkg_resources.Requirement] | None:
         """Returns a list of Python requirements given the current profile."""
-
         content = self.get_file_contents(("python", "constraints"))
 
         if content is None:

@@ -52,7 +52,6 @@ Examples:
 @verbosity_option(logger=logger)
 def jobs(status, tags, **_) -> None:
     """Lists jobs on a given runner identified by description."""
-
     from ...gitlab import get_gitlab_instance
 
     gl = get_gitlab_instance()

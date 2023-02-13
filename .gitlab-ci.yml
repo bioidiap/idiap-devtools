@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 include:
-  - project: bob/dev-profile
-    ref: main
+  - project: software/dev-profile
     file: /gitlab/python.yml
 
 
@@ -15,4 +14,4 @@ documentation:
     - mamba update --override-channels -c conda-forge -n base --all
     - eval "$(/opt/conda/bin/conda shell.bash hook)"
     - conda activate base
-    - pip install --pre --index-url https://gitlab.idiap.ch/api/v4/groups/bob/-/packages/pypi/simple --extra-index-url https://pypi.org/simple '.[doc]' sphinx
+    - pip install --pre --index-url https://gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple '.[doc]' sphinx

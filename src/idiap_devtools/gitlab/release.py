@@ -123,7 +123,6 @@ def _update_pyproject(
     data = tomli.loads(contents)
 
     if re.search(pep440_version, data["project"]["version"]) is not None:
-
         # sets the version
         if version is None:
             # just bump to the next beta
@@ -135,7 +134,6 @@ def _update_pyproject(
             data["project"]["version"] = version
 
     else:
-
         logger.info(
             f"Not setting project version on pyproject.toml as it is "
             f"currently not PEP-440 compliant "
@@ -226,7 +224,6 @@ def get_next_version(
     latest_tag_name = get_latest_tag_name(gitpkg)
 
     if latest_tag_name is None:
-
         if bump == "major":
             return "v1.0.0"
 
@@ -379,7 +376,6 @@ def wait_for_pipeline_to_finish(
     slept_so_far = 0
 
     while pipeline.status == "running" or pipeline.status == "pending":
-
         time.sleep(sleep_step)
         slept_so_far += sleep_step
         if slept_so_far > max_sleep:
@@ -415,7 +411,6 @@ def _cancel_last_pipeline(gitpkg: gitlab.v4.objects.projects.Project) -> None:
 
         gitpkg: gitlab package object
     """
-
     pipeline = _get_last_pipeline(gitpkg)
     logger.info(
         "Cancelling the last pipeline %s of project %s",

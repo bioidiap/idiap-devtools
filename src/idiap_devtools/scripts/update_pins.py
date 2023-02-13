@@ -75,7 +75,6 @@ def update_pins(manual_pins, profile, python, only_pip, **_) -> None:
     to the Python (pip) constraints file, by excluding non-Python
     packages.
     """
-
     import subprocess
 
     from ..profile import Profile
@@ -107,7 +106,6 @@ def update_pins(manual_pins, profile, python, only_pip, **_) -> None:
     conda_to_python = the_profile.get(("conda", "to_python"), {})
 
     if only_pip:
-
         if pip_constraints_path is None:
             click.secho(
                 f"No pip-constraints at profile `{profile}' - aborting",

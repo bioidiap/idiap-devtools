@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-.. _devtools.release:
+.. _idiap-devtools.release:
 
 Release Management
 ------------------
@@ -38,9 +38,9 @@ Create the Changelogs
 =====================
 
 Use the subcommand ``devtool gitlab changelog <group>/<package>`` to generate a
-changelog.  Follow examples and instructions at :ref:`devtools.cli`.  Notice
-this command interacts *directly* with GitLab and does **not** require, or use,
-a local checkout of the package.
+changelog.  Follow examples and instructions at :ref:`idiap-devtools.cli`.
+Notice this command interacts *directly* with GitLab and does **not** require,
+or use, a local checkout of the package.
 
 You may manually update the output changelog file to edit the proposed releaes
 notes for the package or packages to be released.  This may be
@@ -67,8 +67,9 @@ Release the Package
 ===================
 
 Once the changelog is ready, to release the package, use the command ``devtool
-gitlab release``.  Follow examples and instructions at :ref:`devtools.cli`.  The
-process is completely automated and documented at that page.
+gitlab release``.  Follow examples and instructions at
+:ref:`idiap-devtools.cli`.  The process is completely automated and documented
+at that page.
 
 
 .. include:: links.rst

@@ -17,11 +17,11 @@ logger = setup(__name__.split(".", 1)[0])
     epilog="""
 Examples:
 
-  1. Get the last tag information of the bob/exposed package:
+  1. Get the last tag information of the software/clapp package:
 
      .. code::
 
-        devtool gitlab lasttag bob/exposed
+        devtool gitlab lasttag software/clapp
 
 
   2. Get the last tag information of the beat/beat.core package:
@@ -36,7 +36,6 @@ Examples:
 @verbosity_option(logger=logger)
 def lasttag(package, **_) -> None:
     """Returns the last tag information on a given PACKAGE."""
-
     import gitlab
 
     from ...gitlab import get_gitlab_instance
@@ -67,7 +66,6 @@ def lasttag(package, **_) -> None:
             click.echo(f"{package}: <no tags>")
 
     except gitlab.GitlabGetError:
-
         logger.warning(
             "Gitlab access error - package %s does not exist?",
             package,

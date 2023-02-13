@@ -54,7 +54,6 @@ def _load_conda_packages(
     conda_packages = []
 
     for m in meta:
-
         if m.endswith("meta.yaml"):
             # user has passed the full path to the file
             # we can consume this from the input list
@@ -156,9 +155,7 @@ def _load_python_packages(
     python_packages = []
 
     for m in meta:
-
         if m.endswith("pyproject.toml"):
-
             # user has passed the full path to the file
             # we can consume this from the input list
             logger.info(f"Parsing Python package at {m}...")
@@ -224,7 +221,6 @@ def _load_python_packages(
 
 def _simplify_conda_plan(deps: list[str]) -> list[str]:
     """Simplifies the conda package plan by removing reduntant entries."""
-
     from .. import utils
 
     pins_striped = [k.split()[0] for k in deps if len(k.split()) > 1]
@@ -365,15 +361,20 @@ def env(
 ) -> None:
     """Creates a development environment for one or more projects.
 
-    The environment is created by scanning conda's ``meta.yaml`` and Python
-    ``pyproject.toml`` files for all input projects.  All input that is not an
+    The environment is created by scanning conda's ``meta.yaml`` and
+    Python
+    ``pyproject.toml`` files for all input projects.  All input that is
+    not an
     existing file path, is considered a supplemental conda package to be
     installed.  The environment is dumped to disk in the form of a
-    conda-installable YAML environment.  The user may edit this file to add
+    conda-installable YAML environment.  The user may edit this file to
+    add
     Python packages that may be of interest.
 
-    To interpret ``meta.yaml`` files found on the input directories, this
-    command uses the conda render API to discover all profile-constrained and
+    To interpret ``meta.yaml`` files found on the input directories,
+    this
+    command uses the conda render API to discover all profile-
+    constrained and
     unconstrained packages to add to the new environment.
     """
 
