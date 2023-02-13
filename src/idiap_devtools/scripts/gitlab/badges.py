@@ -74,7 +74,6 @@ README_BADGES = [
 
 def _update_readme(content, info):
     """Updates the README content provided, replacing badges."""
-
     import re
 
     new_badges_text = []
@@ -127,7 +126,6 @@ Examples:
 @verbosity_option(logger=logger)
 def badges(package, update_readme, dry_run, server, **_) -> None:
     """Creates stock badges for a project repository."""
-
     import typing
 
     import gitlab

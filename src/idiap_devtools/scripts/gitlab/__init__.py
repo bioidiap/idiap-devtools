@@ -29,7 +29,6 @@ def gitlab() -> None:
     create a configuration file as indicated in the
     :ref:`devtools.install.setup.gitlab` section of the user guide.
     """
-
     pass
 
 

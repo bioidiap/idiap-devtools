@@ -35,7 +35,6 @@ def parse_date(s: typing.TextIO | str) -> datetime.datetime:
 
         A :py:class:`datetime.datetime`.
     """
-
     return dateutil.parser.parse(s, ignoretz=True).replace(
         tzinfo=pytz.timezone("Europe/Zurich")
     )
@@ -206,7 +205,6 @@ def _write_one_tag(
     f.write(f"  - {tag.name} ({git_date:%b %d, %Y %H:%M}){newline}{newline}")
 
     for line in _get_tag_changelog(tag).replace("\r\n", "\n").split("\n"):
-
         line = line.strip()
         if line.startswith("* ") or line.startswith("- "):
             line = line[2:]
@@ -240,7 +238,6 @@ def _write_commits_range(
     """
 
     for commit in commits:
-
         commit_title = commit.title
 
         # skip commits that do not carry much useful information
@@ -281,7 +278,6 @@ def _write_mergerequests_range(
     """
 
     for mr in mrs:
-
         title = mr.title.strip().replace("\r", "").replace("\n", " ")
         title = title.replace(" !", " " + pkg_name + "!")
         title = title.replace(" #", " " + pkg_name + "#")
@@ -384,7 +380,6 @@ def write_tags_with_commits(
     # commits
     start_date = since
     for tag in tags:
-
         # write tag name and its text
         _write_one_tag(f, gitpkg.attributes["path_with_namespace"], tag)
         end_date = parse_date(tag.commit["committed_date"])
@@ -416,7 +411,6 @@ def write_tags_with_commits(
         start_date = end_date
 
     if mode != "tags":
-
         if mode == "mrs":
             # write leftover merge requests
             # the attribute 'merged_at' is not available in GitLab API as of 27

@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 def get_gitlab_instance() -> gitlab.Gitlab:
     """Returns an instance of the gitlab object for remote operations."""
-
     # tries to figure if we can authenticate using a global configuration
     cfgs = ["~/.python-gitlab.cfg", "/etc/python-gitlab.cfg"]
     cfgs = [os.path.expanduser(k) for k in cfgs]

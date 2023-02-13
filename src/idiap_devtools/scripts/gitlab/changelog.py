@@ -90,20 +90,27 @@ Examples:
 def changelog(target, output, mode, since, **_) -> None:
     """Generates changelog file for package(s) from the Gitlab server.
 
-    This script generates changelogs for either a single package or multiple
-    packages, depending on the value of TARGET.  The changelog (in markdown
+    This script generates changelogs for either a single package or
+    multiple
+    packages, depending on the value of TARGET.  The changelog (in
+    markdown
     format) is written to the output file CHANGELOG.
 
-    There are two modes of operation: you may provide the package name in the
+    There are two modes of operation: you may provide the package name
+    in the
     format ``<gitlab-group>/<package-name>``. Or, optionally, provide an
-    existing file containing a list of packages that will be iterated on.
+    existing file containing a list of packages that will be iterated
+    on.
 
-    For each package, we will contact the Gitlab server and create a changelog
-    using merge-requests (default), tags or commits since a given date.  If a
-    starting date is not passed, we'll use the date of the last tagged value or
-    the date of the first commit, if no tags are available in the package.
+    For each package, we will contact the Gitlab server and create a
+    changelog
+    using merge-requests (default), tags or commits since a given date.
+    If a
+    starting date is not passed, we'll use the date of the last tagged
+    value or
+    the date of the first commit, if no tags are available in the
+    package.
     """
-
     import datetime
     import os
 
@@ -118,7 +125,6 @@ def changelog(target, output, mode, since, **_) -> None:
 
     # reads package list or considers name to be a package name
     for tgt in target:
-
         if os.path.exists(tgt) and os.path.isfile(tgt):
             logger.info(f"Reading package names from file {tgt}...")
             with open(tgt) as f:
@@ -138,7 +144,6 @@ def changelog(target, output, mode, since, **_) -> None:
 
         # iterates over the packages and dumps required information
         for package in packages:
-
             if "/" not in package:
                 raise RuntimeError(
                     f"Package names must contain group name"

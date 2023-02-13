@@ -65,7 +65,6 @@ def enable(name, targets, group, dry_run, **_) -> None:
     and files containing list of projects to enable at certain runner
     at.
     """
-
     import pathlib
 
     from ...gitlab import get_gitlab_instance
@@ -83,7 +82,6 @@ def enable(name, targets, group, dry_run, **_) -> None:
 
     packages = []
     for target in targets:
-
         if os.path.exists(target):  # it is a file with project names
             packages += get_projects_from_file(gl, pathlib.Path(target))
 
@@ -94,9 +92,7 @@ def enable(name, targets, group, dry_run, **_) -> None:
             packages += get_projects_from_group(gl, target)
 
     for k in packages:
-
         try:
-
             logger.info(
                 "Processing project %s (id=%d)",
                 k.attributes["path_with_namespace"],
@@ -190,7 +186,6 @@ def disable(name, targets, dry_run, **_) -> None:
     files containing list of projects to load or omit the last argument,
     in which case all projects using this runner will be affected.
     """
-
     import pathlib
 
     from ...gitlab import get_gitlab_instance
@@ -224,7 +219,6 @@ def disable(name, targets, dry_run, **_) -> None:
 
     for k in packages:
         try:
-
             logger.info(
                 "Processing project %s (id=%d)",
                 k.attributes["path_with_namespace"],
@@ -287,7 +281,6 @@ Examples:
 @verbosity_option(logger=logger)
 def list(name, **_) -> None:
     """Lists projects a runner is associated to."""
-
     from ...gitlab import get_gitlab_instance
     from ...gitlab.runners import get_runner_from_description
 

@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 @contextlib.contextmanager
 def root_logger_protection():
     """Protects the root logger against spurious (conda) manipulation."""
-
     root_logger = logging.getLogger()
     level = root_logger.level
     handlers = copy.copy(root_logger.handlers)
@@ -86,7 +85,6 @@ def use_mambabuild():
 
 def get_rendered_metadata(recipe_dir, config):
     """Renders the recipe and returns the interpreted YAML file."""
-
     with root_logger_protection():
         import conda_build.api
 
@@ -97,7 +95,6 @@ def get_rendered_metadata(recipe_dir, config):
 
 def get_parsed_recipe(metadata):
     """Renders the recipe and returns the interpreted YAML file."""
-
     with root_logger_protection():
         return metadata[0][0].get_rendered_recipe_text()
 

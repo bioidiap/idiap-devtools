@@ -66,7 +66,6 @@ def verbosity_option(
 
     def custom_verbosity_option(f):
         def callback(ctx, param, value):
-
             ctx.meta[name] = value
             log_level: int = {
                 0: logging.ERROR,
@@ -187,7 +186,6 @@ def validate_profile(_: click.Context, __: str, value: str) -> str:
 
         The validated option value
     """
-
     profile_path = get_profile_path(value)
     if profile_path is None:
         raise click.BadParameter(

@@ -50,7 +50,6 @@ def getpath(package, path, output, ref, **_) -> None:
     Files are downloaded and stored.  Directories are recursed and fully
     downloaded to the client.
     """
-
     from ...gitlab import download_path, get_gitlab_instance
 
     if "/" not in package:

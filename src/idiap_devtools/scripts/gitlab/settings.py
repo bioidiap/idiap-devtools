@@ -128,7 +128,6 @@ def settings(
     gl_projects = []
 
     for target in projects:
-
         if os.path.exists(target):  # it is a file with project names
             gl_projects += get_projects_from_file(gl, target)
 
@@ -139,9 +138,7 @@ def settings(
             gl_projects += get_projects_from_group(gl, target)
 
         for k in gl_projects:
-
             try:
-
                 logger.info(
                     "Processing project %s (id=%d)",
                     k.attributes["path_with_namespace"],

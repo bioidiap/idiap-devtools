@@ -93,7 +93,6 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     or merge requests.  Alternatively, use the command ``changelog`` to
     auto-generate the description for your release.
     """
-
     import re
     import textwrap
 
@@ -129,7 +128,6 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
         )
 
     for pkg_number, (header, line) in enumerate(pkgs):
-
         match = header_re.match(header)
 
         assert match, f"Line `{header}' somehow did not match title regexp"
