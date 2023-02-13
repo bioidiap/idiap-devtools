@@ -67,7 +67,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "devtools"
+project = "idiap-devtools"
 package = distribution(project)
 
 copyright = "%s, Idiap Research Institute" % time.strftime("%Y")
