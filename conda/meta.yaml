@@ -46,7 +46,7 @@ requirements:
 
 test:
   imports:
-    - {{ data['project']['name'] }}
+    - {{ data['project']['name'].replace('-','_') }}
 
 about:
   home: {{ data['project']['urls']['homepage'] }}
