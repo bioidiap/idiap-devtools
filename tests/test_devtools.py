@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+import idiap_devtools
+
 
 def test_fix_me():
-    assert True
+    assert idiap_devtools
