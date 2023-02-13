@@ -27,7 +27,7 @@ def gitlab() -> None:
     Commands defined here are supposed to interact with gitlab, and
     add/modify/remove resources on it directly.  To avoid repetitive asking,
     create a configuration file as indicated in the
-    :ref:`devtools.install.setup.gitlab` section of the user guide.
+    :ref:`idiap-devtools.install.setup.gitlab` section of the user guide.
     """
     pass
 
