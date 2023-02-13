@@ -17,7 +17,6 @@ import requests
 @contextlib.contextmanager
 def _root_logger_protection():
     """Protects the root logger against spurious (conda) manipulation."""
-
     root_logger = logging.getLogger()
     level = root_logger.level
     handlers = copy.copy(root_logger.handlers)
@@ -46,7 +45,6 @@ def _make_conda_config(config, python, append_file, condarc_options):
     Returns: A dictionary containing the merged configuration, as produced by
     conda-build API's ``get_or_merge_config()`` function.
     """
-
     with _root_logger_protection():
         from conda_build.api import get_or_merge_config
         from conda_build.conda_interface import url_path
@@ -141,7 +139,6 @@ def filter_python_packages(
     print(f"Filtering {len(resolved_packages)} packages for PyPI availability")
 
     for p, v in resolved_packages:
-
         if p in conda_to_python["__ignore__"]:
             continue
 
@@ -165,7 +162,6 @@ def update_pip_constraints_only(
     pip_constraints_path: pathlib.Path,
     conda_to_python: dict[str, typing.Any],
 ) -> None:
-
     packages, _ = load_packages_from_conda_build_config(
         conda_config_path,
         {"channels": []},

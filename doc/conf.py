@@ -67,7 +67,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "devtools"
+project = "idiap-devtools"
 package = distribution(project)
 
 copyright = "%s, Idiap Research Institute" % time.strftime("%Y")
@@ -98,7 +98,7 @@ owner = ["Idiap Research Institute"]
 html_theme = "furo"
 
 html_theme_options = {
-    "source_edit_link": f"https://gitlab.idiap.ch/bob/{project}/-/edit/main/doc/{{filename}}",
+    "source_edit_link": f"https://gitlab.idiap.ch/software/{project}/-/edit/main/doc/{{filename}}",
 }
 
 html_title = f"{project} {release}"

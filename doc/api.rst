@@ -2,35 +2,35 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-.. _devtools.api:
+.. _idiap-devtools.api:
 
 ============
  Python API
 ============
 
 This section includes information for using the Python API of
-``devtools``.
+``idiap-devtools``.
 
 
 .. autosummary::
    :toctree: api
 
-   devtools
-   devtools.click
-   devtools.conda
-   devtools.logging
-   devtools.profile
-   devtools.python
-   devtools.update_pins
-   devtools.utils
+   idiap_devtools
+   idiap_devtools.click
+   idiap_devtools.conda
+   idiap_devtools.logging
+   idiap_devtools.profile
+   idiap_devtools.python
+   idiap_devtools.update_pins
+   idiap_devtools.utils
 
 .. autosummary::
    :toctree: api/gitlab
 
-   devtools.gitlab
-   devtools.gitlab.changelog
-   devtools.gitlab.release
-   devtools.gitlab.runners
+   idiap_devtools.gitlab
+   idiap_devtools.gitlab.changelog
+   idiap_devtools.gitlab.release
+   idiap_devtools.gitlab.runners
 
 
 .. include:: links.rst

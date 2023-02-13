@@ -20,7 +20,7 @@ _INTERVALS = (
     ("minutes", 60),
     ("seconds", 1),
 )
-"""Time intervals that make up human readable time slots"""
+"""Time intervals that make up human readable time slots."""
 
 
 def set_environment(
@@ -67,7 +67,6 @@ def human_time(seconds: int | float, granularity: int = 2) -> str:
 
         A string, that contains the human readable time.
     """
-
     result: list[str | None] = []
 
     for name, count in _INTERVALS:

@@ -74,7 +74,6 @@ README_BADGES = [
 
 def _update_readme(content, info):
     """Updates the README content provided, replacing badges."""
-
     import re
 
     new_badges_text = []
@@ -95,11 +94,11 @@ def _update_readme(content, info):
 Examples:
 
   1. Creates (by replacing) all existing badges in a gitlab project
-     (bob/bob.devtools):
+     (software/idiap-devtools):
 
      .. code:: sh
 
-        devtool gitlab badges bob/devtools
+        devtool gitlab badges software/idiap-devtools
 
    .. note:: This command also affects the README.md file.
 
@@ -127,7 +126,6 @@ Examples:
 @verbosity_option(logger=logger)
 def badges(package, update_readme, dry_run, server, **_) -> None:
     """Creates stock badges for a project repository."""
-
     import typing
 
     import gitlab

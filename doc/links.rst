@@ -12,10 +12,9 @@
 .. _conda-forge: https://conda-forge.org
 .. _venv: https://docs.python.org/3/library/venv.html
 .. _virtualenv: https://virtualenv.pypa.io/en/latest/
-.. _constraints: https://gitlab.idiap.ch/bob/citools/-/tree/master/src/citools/data
 .. _gitlab-token: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
 .. _cookiecutter: https://cookiecutter.readthedocs.io
-.. _cookiecutter-template: https://gitlab.idiap.ch/bob/cookiecutter-pypackage
+.. _cookiecutter-template: https://gitlab.idiap.ch/software/cookiecutter-idiap-pypackage
 .. _semantic version numbers: https://semver.org
 
 .. _pip: https://pip.pypa.io/en/stable/

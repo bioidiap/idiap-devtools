@@ -52,18 +52,18 @@ def _change_settings(
     epilog="""
 Examples:
 
-  1. List settings in a gitlab project (bob/bob.devtools):
+  1. List settings in a gitlab project (software/idiap-devtools):
 
      .. code::sh
 
-        devtool gitlab settings bob/bob.devtools
+        devtool gitlab settings software/idiap-devtools
 
 
   2. Simulates an update to the project description:
 
      .. code::sh
 
-        devtool gitlab settings --description="new description" --dry-run bob/devtools
+        devtool gitlab settings --description="new description" --dry-run software/idiap-devtools
 
 """,
 )
@@ -128,7 +128,6 @@ def settings(
     gl_projects = []
 
     for target in projects:
-
         if os.path.exists(target):  # it is a file with project names
             gl_projects += get_projects_from_file(gl, target)
 
@@ -139,9 +138,7 @@ def settings(
             gl_projects += get_projects_from_group(gl, target)
 
         for k in gl_projects:
-
             try:
-
                 logger.info(
                     "Processing project %s (id=%d)",
                     k.attributes["path_with_namespace"],
