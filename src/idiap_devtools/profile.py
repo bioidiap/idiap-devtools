@@ -19,8 +19,10 @@ from .logging import setup
 
 logger = setup(__name__)
 
+OLD_USER_CONFIGURATION = xdg.xdg_config_home() / "devtools.toml"
+"""The previous default location for the user configuration file"""
 
-USER_CONFIGURATION = xdg.xdg_config_home() / "devtools.toml"
+USER_CONFIGURATION = xdg.xdg_config_home() / "idiap-devtools.toml"
 """The default location for the user configuration file"""
 
 
@@ -57,6 +59,14 @@ def get_path(name: str | pathlib.Path) -> pathlib.Path | None:
     if path.exists() and os.path.isdir(path):
         logger.debug(f"Returning path to profile {str(path)}...")
         return path
+
+    # makes the user move the configuration file quickly!
+    if os.path.exists(OLD_USER_CONFIGURATION):
+        raise RuntimeError(
+            f"Move your configuration from "
+            f"{str(OLD_USER_CONFIGURATION)} to {str(USER_CONFIGURATION)}, "
+            f"and then re-run this application."
+        )
 
     # if you get to this point, then no local directory with that name exists
     # check the user configuration for a specific key

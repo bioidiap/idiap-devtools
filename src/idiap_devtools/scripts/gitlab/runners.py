@@ -147,18 +147,19 @@ def enable(name, targets, group, dry_run, **_) -> None:
     epilog="""
 Examples:
 
-  1. Disables the runner with description "macmini" in project bob/bob and bob/conda:
+  1. Disables the runner with description "macmini" in project software/clapp
+     and software/auto-intersphinx:
 
      .. code:: sh
 
-        devtool gitlab runners disable -vv macmini bob/bob bob/conda
+        devtool gitlab runners disable -vv macmini software/clapp software/auto-intersphinx
 
 
-  1. Disables the runner with description "macmini" for all projects in group bob:
+  1. Disables the runner with description "macmini" for all projects in group software:
 
      .. code:: sh
 
-        devtool gitlab runners disable -vv macmini bob
+        devtool gitlab runners disable -vv macmini software
 
 
   2. Disables the runner with description "macpro" on all projects it is

@@ -95,11 +95,11 @@ def _update_readme(content, info):
 Examples:
 
   1. Creates (by replacing) all existing badges in a gitlab project
-     (bob/bob.devtools):
+     (software/idiap-devtools):
 
      .. code:: sh
 
-        devtool gitlab badges bob/devtools
+        devtool gitlab badges software/idiap-devtools
 
    .. note:: This command also affects the README.md file.
 

@@ -17,19 +17,19 @@ logger = setup(__name__.split(".", 1)[0])
     epilog="""
 Examples:
 
-  1. Get the file ``profile.toml`` from bob/dev-profile's default branch:
+  1. Get the file ``profile.toml`` from software/dev-profile's default branch:
 
      .. code:: sh
 
-        devtool gitlab getpath bob/dev-profile profile.toml
+        devtool gitlab getpath software/dev-profile profile.toml
 
 
   2. Get the directory ``gitlab`` (and eventual sub-directories) from
-     bob/dev-profile:
+     software/dev-profile:
 
      .. code:: sh
 
-        devtool gitlab getpath bob/bob.admin master gitlab _ci
+        devtool gitlab getpath software/dev-profile gitlab
 
 """,
 )

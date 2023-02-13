@@ -52,18 +52,18 @@ def _change_settings(
     epilog="""
 Examples:
 
-  1. List settings in a gitlab project (bob/bob.devtools):
+  1. List settings in a gitlab project (software/idiap-devtools):
 
      .. code::sh
 
-        devtool gitlab settings bob/bob.devtools
+        devtool gitlab settings software/idiap-devtools
 
 
   2. Simulates an update to the project description:
 
      .. code::sh
 
-        devtool gitlab settings --description="new description" --dry-run bob/devtools
+        devtool gitlab settings --description="new description" --dry-run software/idiap-devtools
 
 """,
 )

@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-.. _devtools:
+.. _idiap-devtools:
 
 ===================
  Development Tools

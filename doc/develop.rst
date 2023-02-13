@@ -2,7 +2,7 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-.. _devtools.develop:
+.. _idiap-devtools.develop:
 
 ===============================
  Local development of packages
@@ -28,7 +28,7 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
 .. note::
 
    You may develop software against different development (c.f.
-   :ref:`devtools.install.setup.profile`).  In the context of these
+   :ref:`idiap-devtools.install.setup.profile`).  In the context of these
    instructions, we assume your development profile is located at
    ``../profile``.
 
@@ -43,12 +43,12 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
 
    .. code:: sh
 
-      $ git clone <PACKAGE-URL>  # e.g. git clone git@gitlab.idiap.ch/bob/exposed
-      $ cd <PACKAGE>  # e.g. cd exposed
+      $ git clone <PACKAGE-URL>  # e.g. git clone git@gitlab.idiap.ch/software/clapp
+      $ cd <PACKAGE>  # e.g. cd clapp
       $ conda activate base  # only required if conda/mamba is not on your $PATH
       (base) $ mamba create -n dev python=3.10 pip
       (base) $ conda activate dev
-      (dev) $ pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/bob/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint ../profile/python/pip-constraints.txt --editable '.[qa,doc,test]'
+      (dev) $ pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint ../profile/python/pip-constraints.txt --editable '.[qa,doc,test]'
 
    .. note::
 
@@ -97,8 +97,8 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
        package's recipe (typically at ``conda/meta.yaml``) and
        ``pyproject.toml``, and then to search dependencies (including those for
        quality-assurance, documentation and tests, which may be not listed on
-       ``conda/meta.yaml``).  The `current CI constraints <constraints_>`_
-       shipped with ``citools`` are automatically applied to this installation.
+       ``conda/meta.yaml``).  The installation respects CI constraints
+       established on your chosen profile.
 
 
 After that step, your package will be installed and ready for use inside the
@@ -149,9 +149,9 @@ similar to the above, except you will git-clone and pip-install more packages:
       (base) $ mamba create -n dev python=3.10 pip
       # get the constraints for the "target" development environment.
       # this is just an example:
-      (base) $ curl -O constraints.txt https://gitlab.idiap.ch/bob/dev-profile/-/raw/main/python/pip-constraints.txt
+      (base) $ curl -O constraints.txt https://gitlab.idiap.ch/software/dev-profile/-/raw/main/python/pip-constraints.txt
       (base) $ conda activate dev
-      (dev) $ for pkg in "src/package-b" "."; do pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/bob/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint constraints.txt --editable "${pkg}[qa,doc,test]"; done
+      (dev) $ for pkg in "src/package-b" "."; do pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint constraints.txt --editable "${pkg}[qa,doc,test]"; done
 
 
 .. tab:: conda
