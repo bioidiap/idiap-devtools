@@ -159,11 +159,8 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
 
         # process the "bump" to be performed
         tag = bump.strip().lower()
-        if isinstance(packaging.version.parse(tag), packaging.version.Version):
-            vtag = f"v{tag}"
-            logger.info(f"Tagging package {pkg} to {vtag} (forced)")
 
-        elif tag in ("patch", "minor", "major"):
+        if tag in ("patch", "minor", "major"):
             logger.info(
                 f"Processing package {pkg} to perform a {tag} release bump"
             )
@@ -172,9 +169,14 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
             vtag = get_next_version(use_package, bump)
             logger.info(
                 f"Bumping version of "
-                f"use_package.attributes['path_with_namespace'] "
+                f"{use_package.attributes['path_with_namespace']} "
                 f"to {vtag}",
             )
+
+        elif re.match(packaging.version.VERSION_PATTERN, tag, re.VERBOSE):
+            vtag = f"v{tag}"
+            logger.info(f"Tagging package {pkg} to {vtag} (forced)")
+
         else:
             raise RuntimeError(
                 f"Cannot process tag {tag}: the value should be one of patch, "
