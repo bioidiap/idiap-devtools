@@ -49,7 +49,7 @@ organized in a specific way, and potentially used by various development,
 continuous integration, and administrative tools.  Some examples:
 
 * Software's group: https://gitlab.idiap.ch/software/dev-profile
-* Biosignal's group: https://gitlab.idiap.ch/biosignal/dev-profile
+* Biosignal's group: https://gitlab.idiap.ch/biosignal/software/dev-profile
 * Bob's group: https://gitlab.idiap.ch/bob/dev-profile
 
 While developing using the command-line utility ``devtool``, one or more
