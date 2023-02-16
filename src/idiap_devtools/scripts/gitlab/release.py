@@ -153,7 +153,7 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
         use_package = gl.projects.get(pkg)
         logger.info(
             f"Found GitLab package "
-            f"`use_package.attributes['path_with_namespace']' "
+            f"`{use_package.attributes['path_with_namespace']}' "
             f"(id={use_package.id})",
         )
 
@@ -188,8 +188,9 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
         pipeline_id = release_package(
             use_package, vtag, description_text, dry_run
         )
-        # now, wait for the pipeline to finish, before we can release the
-        # next package
-        wait_for_pipeline_to_finish(use_package, pipeline_id)
+        if not dry_run:
+            # now, wait for the pipeline to finish, before we can release the
+            # next package
+            wait_for_pipeline_to_finish(use_package, pipeline_id)
 
     logger.info(f"Finished processing {changelog.name}")

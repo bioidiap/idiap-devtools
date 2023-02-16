@@ -11,7 +11,7 @@ import typing
 
 import conda_build.config
 import pkg_resources
-import tomli
+import tomlkit
 import xdg
 import yaml
 
@@ -29,7 +29,7 @@ USER_CONFIGURATION = xdg.xdg_config_home() / "idiap-devtools.toml"
 def load(dir: pathlib.Path) -> dict[str, typing.Any]:
     """Loads a profile TOML file, returns a dictionary with contents."""
     with (dir / "profile.toml").open("rb") as f:
-        return tomli.load(f)
+        return tomlkit.load(f)
 
 
 def get_profile_path(name: str | pathlib.Path) -> pathlib.Path | None:
@@ -73,7 +73,7 @@ def get_profile_path(name: str | pathlib.Path) -> pathlib.Path | None:
             f"Loading user-configuration from {str(USER_CONFIGURATION)}..."
         )
         with open(USER_CONFIGURATION, "rb") as f:
-            usercfg = tomli.load(f)
+            usercfg = tomlkit.load(f)
     else:
         usercfg = {}
 
@@ -120,7 +120,7 @@ class Profile:
             f"(resolved to `{basedir}')..."
         )
         with (self._basedir / "profile.toml").open("rb") as f:
-            self.data = tomli.load(f)
+            self.data = tomlkit.load(f)
 
     def conda_config(
         self, python: str, public: bool, stable: bool

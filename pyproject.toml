@@ -33,8 +33,7 @@ dependencies = [
     "python-gitlab",
     "pyyaml",
     "setuptools",
-    "tomli",
-    "tomli-w",
+    "tomlkit",
     "xdg",
     ]
 

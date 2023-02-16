@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import difflib
 import logging
 import re
 import time
@@ -14,15 +15,15 @@ from distutils.version import StrictVersion
 
 import gitlab
 import gitlab.v4.objects
-import tomli
-import tomli_w
+import packaging.version
+import tomlkit
 
 logger = logging.getLogger(__name__)
 
 
 def _update_readme(
     contents: str,
-    version: str | None,
+    version: str,
     default_branch: str,
 ) -> str:
     """Updates README file text to make it release/latest ready.
@@ -44,7 +45,6 @@ def _update_readme(
         New text of readme with all replaces done
     """
 
-    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?)"
     variants = {
         "available",
         "latest",
@@ -52,14 +52,14 @@ def _update_readme(
         "master",
         "stable",
         default_branch,
-        pep440_version,
+        packaging.version.VERSION_PATTERN,
     }
 
     # matches the graphical badge in the readme's text with the given version
-    DOC_IMAGE = re.compile(r"\-(" + "|".join(variants) + r")\-")
+    DOC_IMAGE = re.compile(r"docs\-(" + "|".join(variants) + r")\-", re.VERBOSE)
 
     # matches all other occurences we need to handle
-    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")")
+    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     new_contents = []
     for line in contents.splitlines():
@@ -81,7 +81,7 @@ def _update_readme(
                 line = BRANCH_RE.sub(replacement, line)
         if DOC_IMAGE.search(line) is not None:
             replacement = (
-                "-v%s-" % version if version is not None else "-latest-"
+                "docs-v%s-" % version if version is not None else "docs-latest-"
             )
             line = DOC_IMAGE.sub(replacement, line)
         new_contents.append(line)
@@ -91,8 +91,9 @@ def _update_readme(
 
 def _update_pyproject(
     contents: str,
-    version: str | None,
+    version: str,
     default_branch: str,
+    update_urls: bool,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
@@ -104,12 +105,14 @@ def _update_pyproject(
 
         default_branch: The name of the default project branch to use
 
+        update_urls: If set to ``True``, then also updates the relevant URL
+          links considering the version number provided at ``version``.
+
     Returns:
 
         New version of ``pyproject.toml`` with all replaces done
     """
 
-    pep440_version = r"(v?\d+\.\d+\.\d+((a|b|c|rc|dev)\d+)?)"
     variants = {
         "available",
         "latest",
@@ -117,31 +120,28 @@ def _update_pyproject(
         "master",
         "stable",
         default_branch,
-        pep440_version,
+        packaging.version.VERSION_PATTERN,
     }
 
-    data = tomli.loads(contents)
+    data = tomlkit.loads(contents)
 
-    if re.search(pep440_version, data["project"]["version"]) is not None:
-        # sets the version
-        if version is None:
-            # just bump to the next beta
-            major, minor, patch = data["project"]["version"].split(".")
-            data["project"]["version"] = f"{major}.{minor}.{int(patch) + 1}b0"
-
-        else:
-            # set version passed by user
-            data["project"]["version"] = version
+    if (
+        re.match(packaging.version.VERSION_PATTERN, version, re.VERBOSE)
+        is not None
+    ):
+        data["project"]["version"] = version
 
     else:
         logger.info(
             f"Not setting project version on pyproject.toml as it is "
-            f"currently not PEP-440 compliant "
-            f"(value read: `{data['project']['version']}')"
+            f"not PEP-440 compliant (value read: `{version}')"
         )
 
+    if not update_urls:
+        return tomlkit.dumps(data)
+
     # matches all other occurences we need to handle
-    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")")
+    BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     # sets the various URLs
     url = data["project"].get("urls", {}).get("documentation")
@@ -153,7 +153,7 @@ def _update_pyproject(
             replacement, url
         )
 
-    return tomli_w.dumps(data)
+    return tomlkit.dumps(data)
 
 
 def get_latest_tag_name(
@@ -420,6 +420,34 @@ def _cancel_last_pipeline(gitpkg: gitlab.v4.objects.projects.Project) -> None:
     pipeline.cancel()
 
 
+def _get_differences(orig: str, changed: str, fname: str) -> str:
+    """Calculates the unified diff between two files readout as strings.
+
+    Arguments:
+
+        orig: The original file
+
+        changed: The changed file, after manipulations
+
+        fname: The name of the file
+
+
+    Returns:
+
+        The unified differences between the changes.
+    """
+    differences = difflib.unified_diff(
+        orig.split("\n"),
+        changed.split("\n"),
+        fromfile=fname,
+        tofile=fname + ".new",
+        n=0,
+        lineterm="",
+    )
+
+    return "\n".join(differences)
+
+
 def release_package(
     gitpkg: gitlab.v4.objects.projects.Project,
     tag_name: str,
@@ -458,19 +486,30 @@ def release_package(
         file_path="README.md", ref=gitpkg.default_branch
     )
 
-    readme_contents = readme_file.decode().decode()
+    readme_contents_orig = readme_file.decode().decode()
     readme_contents = _update_readme(
-        readme_contents, version_number, gitpkg.default_branch
+        readme_contents_orig, version_number, gitpkg.default_branch
     )
+    if dry_run:
+        d = _get_differences(readme_contents_orig, readme_contents, "README.md")
+        logger.info(f"Changes to release (from latest):\n{d}")
 
     pyproject_file = gitpkg.files.get(
         file_path="pyproject.toml", ref=gitpkg.default_branch
     )
 
-    pyproject_contents = pyproject_file.decode().decode()
+    pyproject_contents_orig = pyproject_file.decode().decode()
     pyproject_contents = _update_pyproject(
-        pyproject_contents, version_number, gitpkg.default_branch
+        contents=pyproject_contents_orig,
+        version=version_number,
+        default_branch=gitpkg.default_branch,
+        update_urls=True,
     )
+    if dry_run:
+        d = _get_differences(
+            pyproject_contents_orig, pyproject_contents, "pyproject.toml"
+        )
+        logger.info(f"Changes to release (from latest):\n{d}")
 
     # commit and push changes
     update_files_at_defaul_branch(
@@ -500,20 +539,33 @@ def release_package(
     # get the pipeline that is actually running with no skips
     running_pipeline = _get_last_pipeline(gitpkg)
 
-    # 3. Replace branch tag in README back to default branch, change version
-    # file to beta version tag. Git add, commit, and push.
-    readme_contents = _update_readme(
-        readme_contents, None, gitpkg.default_branch
-    )
-    pyproject_contents = _update_pyproject(
-        pyproject_contents, None, gitpkg.default_branch
+    # 3. Re-store the original README, bump the pyproject.toml release by a
+    # (beta) notch
+
+    # sets the next beta version
+    major, minor, patch = version_number.split(".")
+    next_version_number = f"{major}.{minor}.{int(patch) + 1}b0"
+
+    pyproject_contents_latest = _update_pyproject(
+        contents=pyproject_contents_orig,
+        version=next_version_number,
+        default_branch=gitpkg.default_branch,
+        update_urls=False,
     )
     # commit and push changes
     update_files_at_defaul_branch(
         gitpkg,
-        {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
-        "Increased latest version to %s [skip ci]" % version_number,
+        {
+            "README.md": readme_contents_orig,
+            "pyproject.toml": pyproject_contents_latest,
+        },
+        "Increased latest version to %s [skip ci]" % next_version_number,
         dry_run,
     )
+    if dry_run:
+        d = _get_differences(
+            pyproject_contents, pyproject_contents_latest, "pyproject.toml"
+        )
+        logger.info(f"Changes from release (to latest):\n{d}")
 
     return running_pipeline.id

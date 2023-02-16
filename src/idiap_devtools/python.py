@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import pkg_resources
-import tomli
+import tomlkit
 
 
 def dependencies_from_pyproject_toml(
@@ -24,7 +24,7 @@ def dependencies_from_pyproject_toml(
         project.
     """
 
-    data = tomli.load(open(path, "rb"))
+    data = tomlkit.load(open(path, "rb"))
 
     deps = data.get("project", {}).get("dependencies", [])
     optional_deps = data.get("project", {}).get("optional-dependencies", {})
