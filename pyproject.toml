@@ -11,7 +11,7 @@ name = "idiap-devtools"
 version = "1.0.0b0"
 requires-python = ">=3.9"
 description = "This package contains a *pot-pourri* of various tools required to develop python packages at Idiap's GitLab infrastructure"
-dynamic = ["readme"]
+readme = 'README.md'
 license = {text = "BSD 3-Clause License"}
 authors = [
   {name = "Andre Anjos", email = "andre.anjos@idiap.ch"},
@@ -66,9 +66,6 @@ devtool = "idiap_devtools.scripts.cli:cli"
 [tool.setuptools]
 zip-safe = true
 package-dir = {"" = "src"}
-
-[tool.setuptools.dynamic]
-readme = {file = "README.md"}
 
 [tool.distutils.bdist_wheel]
 universal = true
