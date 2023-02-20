@@ -33,6 +33,7 @@ requirements:
     - boa
     # things we depend on
     - click >=8
+    - tomli
     - tomlkit
     - cookiecutter
     - packaging
