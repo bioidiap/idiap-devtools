@@ -8,11 +8,11 @@
  Installation
 ==============
 
-First install mamba_ (conda).  Then, in its ``base`` environment, install this
-package using one of the methods below:
+First install mamba_ or conda (preferably via mambaforge_).  Then, in its
+``base`` environment, install this package using one of the methods below:
 
 
-.. tab:: mamba/conda
+.. tab:: mamba/conda (RECOMMENDED)
 
    .. code-block:: sh
 
@@ -21,14 +21,19 @@ package using one of the methods below:
 
 .. tab:: pip
 
-   .. warning:
+   .. warning::
 
-      While this is possible for testing purposes, it is not recommended.
+      While this is possible for testing purposes, it is **not recommended**.
       Pip-installing this package may break your ``base`` conda environment.
+      Moreover, you will need to ensure both ``mamba`` and ``boa`` packages are
+      installed on the ``base`` environment.
 
    .. code-block:: sh
 
-      conda activate base && pip install git+https://gitlab.idiap.ch/software/idiap-devtools
+      conda activate base
+      # next step only required if using miniconda or miniforge (skip it if using mambaforge_)
+      conda install -c conda-forge mamba boa
+      pip install git+https://gitlab.idiap.ch/software/idiap-devtools
 
 
 .. _idiap-devtools.install.setup:

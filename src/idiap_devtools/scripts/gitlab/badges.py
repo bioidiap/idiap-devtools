@@ -50,11 +50,6 @@ README_BADGES = [
         "image_url": "https://img.shields.io/badge/docs-stable-yellow.svg",
     },
     {
-        "name": "stable-docs",
-        "link_url": "{idiap_server}/docs/{group}/{name}/master/index.html",
-        "image_url": "https://img.shields.io/badge/docs-latest-orange.svg",
-    },
-    {
         "name": "build",
         "link_url": "https://gitlab.idiap.ch/{group}/{name}/commits/master",
         "image_url": "https://gitlab.idiap.ch/{group}/{name}/badges/master/pipeline.svg",
