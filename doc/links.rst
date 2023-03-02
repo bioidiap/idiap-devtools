@@ -9,6 +9,7 @@
 .. _idiap: http://www.idiap.ch
 .. _python: http://www.python.org
 .. _mamba: https://mamba.readthedocs.io/en/latest/index.html
+.. _mambaforge: https://github.com/conda-forge/miniforge#mambaforge
 .. _conda-forge: https://conda-forge.org
 .. _venv: https://docs.python.org/3/library/venv.html
 .. _virtualenv: https://virtualenv.pypa.io/en/latest/
