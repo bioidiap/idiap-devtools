@@ -58,7 +58,7 @@ def _update_readme(
     # matches the graphical badge in the readme's text with the given version
     DOC_IMAGE = re.compile(r"docs\-(" + "|".join(variants) + r")\-", re.VERBOSE)
 
-    # matches all other occurences we need to handle
+    # matches all other occurrences we need to handle
     BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     new_contents = []
@@ -251,7 +251,7 @@ def get_next_version(
     if bump == "major":
         return f"v{int(major)+1}.0.0"
 
-    elif bump == "minor":
+    if bump == "minor":
         return f"v{major}.{int(minor)+1}.0"
 
     # it is a patch release, proceed with caution for pre-releases
@@ -271,7 +271,7 @@ def get_next_version(
     return f"v{major}.{minor}.{patch_int+1}"
 
 
-def update_files_at_defaul_branch(
+def update_files_at_default_branch(
     gitpkg: gitlab.v4.objects.projects.Project,
     files_dict: dict[str, str],
     message: str,
@@ -512,7 +512,7 @@ def release_package(
         logger.info(f"Changes to release (from latest):\n{d}")
 
     # commit and push changes
-    update_files_at_defaul_branch(
+    update_files_at_default_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased stable version to %s" % version_number,
@@ -553,7 +553,7 @@ def release_package(
         update_urls=False,
     )
     # commit and push changes
-    update_files_at_defaul_branch(
+    update_files_at_default_branch(
         gitpkg,
         {
             "README.md": readme_contents_orig,
