@@ -16,6 +16,7 @@ from distutils.version import StrictVersion
 import gitlab
 import gitlab.v4.objects
 import packaging.version
+import packaging.requirements
 import tomlkit
 
 logger = logging.getLogger(__name__)
@@ -89,13 +90,102 @@ def _update_readme(
     return "\n".join(new_contents) + "\n"
 
 
+def _compatible_pins(desired_pin: str, restriction: str | None):
+    """Returns wether the desired version pin is within ``restriction``
+
+    A ``restriction`` of ``None`` will always return ``True``.
+
+    Arguments:
+
+        desired_pin: The version pinning in the form ``== 1.2.3``
+
+        restriction: A restriction pin in the form ``>= 1.2``
+    """
+    if restriction is None:
+        return True
+
+    req = packaging.requirements.Requirement(restriction)
+    desired_req = packaging.requirements.Requirement(desired_pin)
+    return desired_req == req  # TODO
+
+
+def _pin_versions_of_packages_list(
+    packages_list: list[str],
+    dependencies_versions: dict[str, str],
+    strict_pins: bool = True,
+) -> list[str]:
+    """Adds its version to each package according to a dictionary of versions.
+
+    Iterates over ``packages_list`` and sets the version to be the corresponding one in
+    ``dependencies_versions``.
+
+    Edge cases:
+
+        **Package not in ``dependencies_versions``**: The package will not be pinned.
+
+        **Package already has a compatible version pinning**: The version in
+        ``dependencies_versions`` will overwrite the current version (unless it is not
+        present in ``dependencies_versions``).
+
+        **Package already has a version that conflicts with the desired one**: Raises a
+        ``ValueError``.
+
+    Arguments:
+
+        packages_list: The packages to pin
+
+        dependencies_versions: All the known packages with their desired version. If
+        ``strict_pins`` is ``False``, the versions will be pinned as "compatible
+        release" format (``1.2`` corresponds to ``>= 1.2, == 1.*``).
+
+        strict_pins: Forces the dependencies version to the desired version. Otherwise
+            sets the version as lower bound with ``~= x.y``.
+
+    Returns:
+
+        ``packages_list`` edited with the versions pinned.
+
+    Raises:
+
+        ``ValueError`` if a version in ``dependencies_versions`` conflicts with an
+        already present pinning.
+    """
+
+    logger.debug(
+        "Pinning packages:\n%s\nDesired versions:\n%s",
+        packages_list,
+        dependencies_versions,
+    )
+    for package in packages_list:
+        pkg_name, pre_version = (
+            package.split(" ", 1) if " " in package else (package, None)
+        )
+        desired_version = dependencies_versions.get(pkg_name, None)
+        desired_version = (
+            f"== {desired_version}" if strict_pins else f"~= {desired_version}"
+        )
+        if not _compatible_pins(desired_version, pre_version):
+            raise ValueError(
+                f"Pinned version of package '{pre_version}' not compatible with "
+                f"desired version '{desired_version}'!"
+            )
+
+    raise NotImplementedError("Not yet implemented.")
+
+
+
 def _update_pyproject(
     contents: str,
     version: str,
     default_branch: str,
     update_urls: bool,
+    dependencies_versions: dict[str, str] | None,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
+
+    - Sets the project.version field to the given version.
+    - Pins the dependencies version to the ones in the given dictionary.
+    - Updates the documentation URLs to point specifically to the given version.
 
     Arguments:
 
@@ -107,6 +197,10 @@ def _update_pyproject(
 
         update_urls: If set to ``True``, then also updates the relevant URL
           links considering the version number provided at ``version``.
+
+        dependencies_versions: A dictionary mapping an external package name to it's
+          supported version (``{"scikit-learn": "1.1.2"}``). If not provided, the
+          dependencies will be left unchanged.
 
     Returns:
 
@@ -129,18 +223,39 @@ def _update_pyproject(
         re.match(packaging.version.VERSION_PATTERN, version, re.VERBOSE)
         is not None
     ):
+        logger.info(
+            "Updating pyproject.toml version from '%s' to '%s'",
+            data.get("project", {}).get("version", "unknown version"),
+            version,
+        )
         data["project"]["version"] = version
 
     else:
         logger.info(
-            f"Not setting project version on pyproject.toml as it is "
-            f"not PEP-440 compliant (value read: `{version}')"
+            "Not setting project version on pyproject.toml as it is "
+            f"not PEP-440 compliant (given value: `{version}')"
         )
+
+    # Pinning of the dependencies packages version
+    if dependencies_versions is not None:
+        # Main dependencies
+        logger.info("Pinning versions of dependencies.")
+        pkg_deps = data.get("project", {}).get("dependencies", [])
+        _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
+
+        # Optional dependencies
+        opt_pkg_deps = data.get("project", {}).get("optional-dependencies", [])
+        for deps_group, pkg_deps in opt_pkg_deps:
+            logger.info(
+                "Pinning versions of optional dependencies group `%s`.",
+                deps_group,
+            )
+            _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
 
     if not update_urls:
         return tomlkit.dumps(data)
 
-    # matches all other occurences we need to handle
+    # matches all other occurrences we need to handle
     BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     # sets the various URLs
@@ -183,7 +298,7 @@ def get_latest_tag_name(
         for tag in latest_tags
         if StrictVersion.version_re.match(tag.name[1:])
     ]
-    if not tag_names:  # no tags wee found.
+    if not tag_names:  # no tags were found.
         return None
     # sort them correctly according to each subversion number
     tag_names.sort(key=StrictVersion)
