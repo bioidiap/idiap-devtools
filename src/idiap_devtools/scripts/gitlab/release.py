@@ -11,6 +11,9 @@ import click
 from ...click import PreserveIndentCommand, verbosity_option
 from ...logging import setup
 
+from idiap_devtools.click import validate_profile
+from idiap_devtools.profile import Profile
+
 logger = setup(__name__.split(".", 1)[0])
 
 
@@ -41,6 +44,16 @@ Examples:
 )
 @click.argument("changelog", type=click.File("rt", lazy=False))
 @click.option(
+    "-P",
+    "--profile",
+    default="default",
+    show_default=True,
+    callback=validate_profile,
+    help="Directory containing the development profile (and a file named "
+    "profile.toml), or the name of a configuration key pointing to the "
+    "development profile to use",
+)
+@click.option(
     "-d",
     "--dry-run/--no-dry-run",
     default=False,
@@ -49,7 +62,7 @@ Examples:
     "printing to help you understand what will be done",
 )
 @verbosity_option(logger=logger)
-def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
+def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
 
     By using a CHANGELOG file as an input (e.g. that can be generated with the
@@ -106,6 +119,8 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     )
 
     gl = get_gitlab_instance()
+
+    profile = Profile(profile)
 
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
@@ -186,7 +201,11 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
 
         # release the package with the found tag and its comments
         pipeline_id = release_package(
-            use_package, vtag, description_text, dry_run
+            gitpkg=use_package,
+            tag_name=vtag,
+            tag_comments=description_text,
+            profile=profile,
+            dry_run=dry_run,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the

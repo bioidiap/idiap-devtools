@@ -12,12 +12,15 @@ import re
 import time
 
 from distutils.version import StrictVersion
+from pkg_resources import Requirement
+from pkg_resources import Distribution
 
 import gitlab
 import gitlab.v4.objects
 import packaging.version
-import packaging.requirements
 import tomlkit
+
+from idiap_devtools.profile import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -90,29 +93,38 @@ def _update_readme(
     return "\n".join(new_contents) + "\n"
 
 
-def _compatible_pins(desired_pin: str, restriction: str | None):
-    """Returns wether the desired version pin is within ``restriction``
+def _compatible_pins(
+    desired_pin: list[tuple(str, str)], restriction: Requirement | None
+):
+    """Returns wether the desired version pin is within ``restriction``.
 
     A ``restriction`` of ``None`` will always return ``True``.
 
     Arguments:
 
-        desired_pin: The version pinning in the form ``== 1.2.3``
+        desired_pin: The version pinning in the form ``1.2.3``.
 
-        restriction: A restriction pin in the form ``>= 1.2``
+        restriction: A requirement with version specifiers (with e.g. ``>= 1.2``).
     """
-    if restriction is None:
+    if restriction is None or len(desired_pin) < 1:
         return True
 
-    req = packaging.requirements.Requirement(restriction)
-    desired_req = packaging.requirements.Requirement(desired_pin)
-    return desired_req == req  # TODO
+    if len(desired_pin) == 1 and desired_pin[0] == "==":
+        return desired_pin[0][1] in restriction
+
+    logger.warning(
+        "Complex dependency pinning for '%s':\n"
+        "  trying to pin with '%s'.\n"
+        "  The compatibility between them will not be checked!",
+        restriction,
+        desired_pin,
+    )
+    return True
 
 
 def _pin_versions_of_packages_list(
     packages_list: list[str],
-    dependencies_versions: dict[str, str],
-    strict_pins: bool = True,
+    dependencies_versions: list[Requirement],
 ) -> list[str]:
     """Adds its version to each package according to a dictionary of versions.
 
@@ -124,22 +136,23 @@ def _pin_versions_of_packages_list(
         **Package not in ``dependencies_versions``**: The package will not be pinned.
 
         **Package already has a compatible version pinning**: The version in
-        ``dependencies_versions`` will overwrite the current version (unless it is not
-        present in ``dependencies_versions``).
+        ``dependencies_versions`` will overwrite the current version if compatible.
 
         **Package already has a version that conflicts with the desired one**: Raises a
         ``ValueError``.
+
+    Limitations:
+
+        - If the dependency already has a version specifier (in ``pyproject.toml``), we
+            only check the pin is compatible with it if the pin is an equality specifier
+            (``tensorflow >=2.0, <3.0.0`` will not be checked for compatibility).
 
     Arguments:
 
         packages_list: The packages to pin
 
-        dependencies_versions: All the known packages with their desired version. If
-        ``strict_pins`` is ``False``, the versions will be pinned as "compatible
-        release" format (``1.2`` corresponds to ``>= 1.2, == 1.*``).
-
-        strict_pins: Forces the dependencies version to the desired version. Otherwise
-            sets the version as lower bound with ``~= x.y``.
+        dependencies_versions: All the known packages with their desired version pinning
+            (either strict with ``==1.2`` or compatible with ``~=1.2``).
 
     Returns:
 
@@ -147,7 +160,7 @@ def _pin_versions_of_packages_list(
 
     Raises:
 
-        ``ValueError`` if a version in ``dependencies_versions`` conflicts with an
+        - ``ValueError`` if a version in ``dependencies_versions`` conflicts with an
         already present pinning.
     """
 
@@ -156,22 +169,114 @@ def _pin_versions_of_packages_list(
         packages_list,
         dependencies_versions,
     )
+
+    # Check that there is not the same dependency twice in the pins
+    seen = set()
+    for d in dependencies_versions:
+        if d.key in seen:
+            raise NotImplementedError(
+                "Pinning with more than one specification per dependency not supported."
+            )
+        seen.add(d.key)
+
+    # Make it easier to retrieve the dependency pin for each package.
+    dependencies_dict = {d.key: d for d in dependencies_versions}
+
+    results = []
+
+    # package is our the dependency we want to pin
     for package in packages_list:
-        pkg_name, pre_version = (
-            package.split(" ", 1) if " " in package else (package, None)
-        )
-        desired_version = dependencies_versions.get(pkg_name, None)
-        desired_version = (
-            f"== {desired_version}" if strict_pins else f"~= {desired_version}"
-        )
-        if not _compatible_pins(desired_version, pre_version):
-            raise ValueError(
-                f"Pinned version of package '{pre_version}' not compatible with "
-                f"desired version '{desired_version}'!"
+        # Ensure the package is always in results
+        results.append(package)
+
+        # Get the dependency package version specifier if already present.
+        pkg_req = Requirement.parse(package)
+
+        if pkg_req.url is not None:
+            logger.warning(
+                "Ignoring dependency '%s' as it is specified with a url (%s).",
+                pkg_req.key,
+                pkg_req.url,
             )
 
-    raise NotImplementedError("Not yet implemented.")
+        # Retrieve this dependency constraint Requirement object
+        desired_pin = dependencies_dict.get(pkg_req.key)
 
+        if desired_pin is None:
+            logger.warning(
+                "Dependency '%s' is not available in constraints. Skipping pinning.",
+                pkg_req.key,
+            )
+            continue
+
+        if desired_pin.url is not None:
+            logger.info(
+                "Pinning of %s will be done with a URL (%s).",
+                pkg_req.key,
+                desired_pin.url,
+            )
+        else:
+
+            # Build the 'specs' field
+            if len(desired_pin.specs) == 0:
+                logger.warning(
+                    "Dependency %s has no version specifier. Skipping pinning.",
+                    pkg_req.key,
+                )
+                continue
+
+            # If version specifiers are already present in that dependency
+            if len(pkg_req.specs) > 0:
+                # Check compatibility of already present version
+                if not _compatible_pins(desired_pin, pkg_req.specs[0]):
+                    raise ValueError(
+                        f"Specified version of package '{pkg_req}' not compatible with "
+                        f"desired version '{desired_pin.specs}' from constraints!"
+                    )
+            # Set the version of that dependency to the pinned one.
+            specs_str = ",".join("".join(s) for s in desired_pin.specs)
+
+        # Build the 'marker' field
+        if (
+            desired_pin.marker is not None
+            and pkg_req.marker is not None
+            and str(desired_pin.marker) != str(pkg_req.marker)
+        ):
+            raise ValueError(
+                "There is a conflict between markers in the package specification "
+                f"({pkg_req.marker}) and the constraints ({desired_pin.marker})!"
+            )
+        marker_str = ""
+        if desired_pin.marker is not None:
+            marker_str = f"; {desired_pin.marker}"
+
+        # Build the 'extras' field
+        if (
+            desired_pin.extras is not None
+            and pkg_req.extras is not None
+            and desired_pin.extras != pkg_req.extras
+        ):
+            raise ValueError(
+                "There is a conflict between extras in the package specification "
+                f"({pkg_req.extras}) and the constraints ({desired_pin.extras})!"
+            )
+
+        extras_str = ""
+        if desired_pin.extras is not None:
+            extras_str = f"[{','.join(desired_pin.extras)}]"
+        elif pkg_req.extras is not None:
+            extras_str = f"[{','.join(pkg_req.extras)}]"
+
+        # Assemble the dependency specification in one string
+        if desired_pin.url is not None:
+            final_str = "".join((pkg_req.key, extras_str, "@ ", desired_pin.url, " ", marker_str))
+        else:
+            final_str = "".join((pkg_req.key, extras_str, specs_str, marker_str))
+
+        # Replace the package specification with the pinned version
+        results[-1] = str(Requirement.parse(final_str))
+
+    return results
 
 
 def _update_pyproject(
@@ -179,7 +284,7 @@ def _update_pyproject(
     version: str,
     default_branch: str,
     update_urls: bool,
-    dependencies_versions: dict[str, str] | None,
+    dependencies_versions: list[Requirement] | None,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
@@ -198,9 +303,9 @@ def _update_pyproject(
         update_urls: If set to ``True``, then also updates the relevant URL
           links considering the version number provided at ``version``.
 
-        dependencies_versions: A dictionary mapping an external package name to it's
-          supported version (``{"scikit-learn": "1.1.2"}``). If not provided, the
-          dependencies will be left unchanged.
+        dependencies_versions: A list of :any:`pkg_resource.Requirements` mapping an
+          external package name to it's supported version . If not provided, the
+          dependencies in the ``pyproject.toml`` file will be left unchanged.
 
     Returns:
 
@@ -241,16 +346,18 @@ def _update_pyproject(
         # Main dependencies
         logger.info("Pinning versions of dependencies.")
         pkg_deps = data.get("project", {}).get("dependencies", [])
-        _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
+        pkg_deps = _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
 
         # Optional dependencies
         opt_pkg_deps = data.get("project", {}).get("optional-dependencies", [])
-        for deps_group, pkg_deps in opt_pkg_deps:
+        for pkg_group_and_deps in opt_pkg_deps:
             logger.info(
                 "Pinning versions of optional dependencies group `%s`.",
-                deps_group,
+                pkg_group_and_deps[0],
             )
-            _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
+            pkg_group_and_deps[1] = _pin_versions_of_packages_list(
+                pkg_deps, dependencies_versions
+            )
 
     if not update_urls:
         return tomlkit.dumps(data)
@@ -567,6 +674,7 @@ def release_package(
     gitpkg: gitlab.v4.objects.projects.Project,
     tag_name: str,
     tag_comments: str,
+    profile: Profile,
     dry_run: bool = False,
 ) -> int | None:
     """Release package.
@@ -613,12 +721,15 @@ def release_package(
         file_path="pyproject.toml", ref=gitpkg.default_branch
     )
 
+    dependencies_pins = profile.python_constraints()
+
     pyproject_contents_orig = pyproject_file.decode().decode()
     pyproject_contents = _update_pyproject(
         contents=pyproject_contents_orig,
         version=version_number,
         default_branch=gitpkg.default_branch,
         update_urls=True,
+        dependencies_versions=dependencies_pins,
     )
     if dry_run:
         d = _get_differences(
