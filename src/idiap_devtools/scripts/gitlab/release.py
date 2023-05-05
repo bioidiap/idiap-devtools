@@ -26,19 +26,19 @@ Examples:
 
      .. code:: sh
 
-        devtool gitlab release -vv changelog.md
+        devtool gitlab release --profile=default -vv changelog.md
 
      .. tip::
 
         In case of errors, just edit the changelog file to remove packages
         already released before relaunching the application.
 
-  2. The option `-dry-run` can be used to let the script print what it would
+  2. The option ``--dry-run`` can be used to let the script print what it would
      do instead of actually doing it:
 
      .. code:: sh
 
-        devtool gitlab release -vv --dry-run changelog.md
+        devtool gitlab release --profile=default -vv --dry-run changelog.md
 
 """,
 )
@@ -46,7 +46,7 @@ Examples:
 @click.option(
     "-P",
     "--profile",
-    default="default",
+    default=None,
     show_default=True,
     callback=validate_profile,
     help="Directory containing the development profile (and a file named "
@@ -69,16 +69,17 @@ def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
     ``changelog`` command), this script goes through all packages listed (and
     in order):
 
-        * Modifies ``pyproject.toml`` with the new release number
+        * Modifies ``pyproject.toml`` with the new release number and pins the
+          dependencies according to the specified profile's constraints
         * Sets-up the README links to point to the correct pipeline and
           documentation for the package
         * Commits, tags and pushes the git project adding the changelog
           description for the GitLab release page
-        * Waits for the pipeline launched for the previous step to end
+        * Waits for the pipeline launched by the previous step to end
         * Bumps the package version again, to the next beta patch
         * Re-modifies the README to point to the "latest" documentation and
           pipeline versions
-        * Re-commits the whole with the option ``[ci skip]``.
+        * Re-commits and pushes the whole with the option ``[ci skip]``.
 
     The changelog is expected to have the following structure:
 
@@ -204,8 +205,8 @@ def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
             gitpkg=use_package,
             tag_name=vtag,
             tag_comments=description_text,
-            profile=profile,
             dry_run=dry_run,
+            profile=profile,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the

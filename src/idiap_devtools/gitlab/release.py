@@ -674,10 +674,10 @@ def release_package(
     gitpkg: gitlab.v4.objects.projects.Project,
     tag_name: str,
     tag_comments: str,
-    profile: Profile,
     dry_run: bool = False,
+    profile: Profile = Profile("default"),  # Not pretty, but won't break the signature.
 ) -> int | None:
-    """Release package.
+    """Releases a package.
 
     The provided tag will be annotated with a given list of comments. Files
     such as ``README.md`` and ``pyproject.toml`` will be updated according to
@@ -694,6 +694,8 @@ def release_package(
 
         dry_run: If ``True``, nothing will be committed or pushed to GitLab
 
+        profile: An instance of :class:`idiap_devtools.profile.Profile` used to retrieve
+            the specifiers to pin the package's dependencies in ``pyproject.toml``.
 
     Returns:
 
