@@ -13,7 +13,6 @@ import time
 
 from distutils.version import StrictVersion
 from pkg_resources import Requirement
-from pkg_resources import Distribution
 
 import gitlab
 import gitlab.v4.objects
