@@ -125,6 +125,7 @@ def _compatible_pins(
 def _pin_versions_of_packages_list(
     packages_list: list[str],
     dependencies_versions: list[Requirement],
+    strict: bool = False,
 ) -> list[str]:
     """Adds its version to each package according to a dictionary of versions.
 
@@ -149,10 +150,13 @@ def _pin_versions_of_packages_list(
 
     Arguments:
 
-        packages_list: The packages to pin
+        packages_list: The packages to pin.
 
-        dependencies_versions: All the known packages with their desired version pinning
-            (either strict with ``==1.2`` or compatible with ``~=1.2``).
+        dependencies_versions: All the known packages with their desired version
+            pinning.
+
+        strict: If ``True``, the pins will be converted to exact match (``==``),
+            otherwise they are converted to compatible match (``~=``).
 
     Returns:
 
@@ -184,9 +188,9 @@ def _pin_versions_of_packages_list(
 
     results = []
 
-    # package is our the dependency we want to pin
+    # package is the dependency we want to pin
     for package in packages_list:
-        # Ensure the package is always in results
+
         results.append(package)
 
         # Get the dependency package version specifier if already present.
@@ -199,7 +203,7 @@ def _pin_versions_of_packages_list(
                 pkg_req.url,
             )
 
-        # Retrieve this dependency constraint Requirement object
+        # Retrieve this dependency's constraint Requirement object
         desired_pin = dependencies_dict.get(pkg_req.key)
 
         if desired_pin is None:
@@ -228,13 +232,24 @@ def _pin_versions_of_packages_list(
             # If version specifiers are already present in that dependency
             if len(pkg_req.specs) > 0:
                 # Check compatibility of already present version
-                if not _compatible_pins(desired_pin, pkg_req.specs[0]):
+                if not _compatible_pins(desired_pin.specs, pkg_req):
                     raise ValueError(
                         f"Specified version of package '{pkg_req}' not compatible with "
                         f"desired version '{desired_pin.specs}' from constraints!"
                     )
+            desired_specs = pkg_req.specs
+            if strict and len(desired_specs) == 1:
+                desired_specs[0] = "==", desired_specs[0][1]
+            elif not strict and len(desired_specs) == 1:
+                if desired_specs[0] == "==":
+                    desired_specs[0] = "~=", desired_specs[1]
+                else:
+                    logger.warning(
+                        "Pin %s not converted to 'compatible' (~=) pin.",
+                        desired_pin,
+                    )
             # Set the version of that dependency to the pinned one.
-            specs_str = ",".join("".join(s) for s in desired_pin.specs)
+            specs_str = ",".join("".join(s) for s in desired_specs)
 
         # Build the 'marker' field
         if (
@@ -269,7 +284,9 @@ def _pin_versions_of_packages_list(
 
         # Assemble the dependency specification in one string
         if desired_pin.url is not None:
-            final_str = "".join((pkg_req.key, extras_str, "@ ", desired_pin.url, " ", marker_str))
+            final_str = "".join(
+                (pkg_req.key, extras_str, "@ ", desired_pin.url, " ", marker_str)
+            )
         else:
             final_str = "".join((pkg_req.key, extras_str, specs_str, marker_str))
 
@@ -284,7 +301,8 @@ def _update_pyproject(
     version: str,
     default_branch: str,
     update_urls: bool,
-    dependencies_versions: list[Requirement] | None,
+    dependencies_versions: list[Requirement] | None = None,
+    strict_pins: bool = False,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
@@ -306,6 +324,9 @@ def _update_pyproject(
         dependencies_versions: A list of :any:`pkg_resource.Requirements` mapping an
           external package name to it's supported version . If not provided, the
           dependencies in the ``pyproject.toml`` file will be left unchanged.
+
+        strict_pins: If ``True``, will pin dependencies with exact pins (``==``),
+          otherwise, will try pin them with compatible pins (``~=``).
 
     Returns:
 
@@ -346,17 +367,23 @@ def _update_pyproject(
         # Main dependencies
         logger.info("Pinning versions of dependencies.")
         pkg_deps = data.get("project", {}).get("dependencies", [])
-        pkg_deps = _pin_versions_of_packages_list(pkg_deps, dependencies_versions)
+        pkg_deps = _pin_versions_of_packages_list(
+            packages_list=pkg_deps,
+            dependencies_versions=dependencies_versions,
+            strict=strict_pins,
+        )
 
         # Optional dependencies
         opt_pkg_deps = data.get("project", {}).get("optional-dependencies", [])
-        for pkg_group_and_deps in opt_pkg_deps:
+        for pkg_group in opt_pkg_deps:
             logger.info(
                 "Pinning versions of optional dependencies group `%s`.",
-                pkg_group_and_deps[0],
+                pkg_group,
             )
-            pkg_group_and_deps[1] = _pin_versions_of_packages_list(
-                pkg_deps, dependencies_versions
+            opt_pkg_deps[pkg_group] = _pin_versions_of_packages_list(
+                packages_list=pkg_deps,
+                dependencies_versions=dependencies_versions,
+                strict=strict_pins,
             )
 
     if not update_urls:
@@ -675,7 +702,8 @@ def release_package(
     tag_name: str,
     tag_comments: str,
     dry_run: bool = False,
-    profile: Profile = Profile("default"),  # Not pretty, but won't break the signature.
+    profile: Profile | None = None,
+    strict_pins: bool = False,
 ) -> int | None:
     """Releases a package.
 
@@ -696,6 +724,9 @@ def release_package(
 
         profile: An instance of :class:`idiap_devtools.profile.Profile` used to retrieve
             the specifiers to pin the package's dependencies in ``pyproject.toml``.
+
+        strict_pins: If ``True``, will pin dependencies with exact version pins (``==``)
+            otherwise, will try to pin with compatible pins (``~=``).
 
     Returns:
 
@@ -723,7 +754,7 @@ def release_package(
         file_path="pyproject.toml", ref=gitpkg.default_branch
     )
 
-    dependencies_pins = profile.python_constraints()
+    dependencies_pins = profile.python_constraints() if profile is not None else profile
 
     pyproject_contents_orig = pyproject_file.decode().decode()
     pyproject_contents = _update_pyproject(
@@ -732,6 +763,7 @@ def release_package(
         default_branch=gitpkg.default_branch,
         update_urls=True,
         dependencies_versions=dependencies_pins,
+        strict_pins=strict_pins,
     )
     if dry_run:
         d = _get_differences(

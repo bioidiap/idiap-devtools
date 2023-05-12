@@ -48,7 +48,6 @@ Examples:
     "--profile",
     default=None,
     show_default=True,
-    callback=validate_profile,
     help="Directory containing the development profile (and a file named "
     "profile.toml), or the name of a configuration key pointing to the "
     "development profile to use",
@@ -61,8 +60,17 @@ Examples:
     "(combine with the verbosity flags - e.g. ``-vvv``) to enable "
     "printing to help you understand what will be done",
 )
+@click.option(
+    "-s",
+    "--strict-pins",
+    is_flag=True,
+    help="Do not convert strict version pins (==) to compatible version pins (~=) when "
+    "pinning version based on a profile.",
+)
 @verbosity_option(logger=logger)
-def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
+def release(
+    changelog: typing.TextIO, dry_run: bool, profile: str, strict_pins: bool, **_
+) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
 
     By using a CHANGELOG file as an input (e.g. that can be generated with the
@@ -80,6 +88,12 @@ def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
         * Re-modifies the README to point to the "latest" documentation and
           pipeline versions
         * Re-commits and pushes the whole with the option ``[ci skip]``.
+
+    When a dev-profile is given (with ``--profile``), the versions of the dependencies
+    in ``pyproject.toml`` will be pinned to those of the ``constraints.txt`` file.
+    By default, (without ``--strict``), the versions will be restricted with a
+    "compatible" pin (``~=``). If ``--strict`` is set, all the versions will be pinned
+    with an "exact" pin (``==``).
 
     The changelog is expected to have the following structure:
 
@@ -121,7 +135,20 @@ def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
 
     gl = get_gitlab_instance()
 
-    profile = Profile(profile)
+    if profile is None:
+        logger.warning(
+            "No dev-profile given. There will be no dependencies version pinning. "
+            "To enable pinning, set the --profile option."
+        )
+    else:
+        profile = validate_profile(None, None, profile)
+        logger.info("Loading profile '%s' for dependencies version pinning.", profile)
+        profile = Profile(profile)
+
+        if strict_pins:
+            logger.info("Will use strict pinning (==) for the dependencies.")
+        else:
+            logger.info("Will use compatible pinning (~=) for the dependencies.")
 
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
@@ -207,6 +234,7 @@ def release(changelog: typing.TextIO, dry_run: bool, profile: str, **_) -> None:
             tag_comments=description_text,
             dry_run=dry_run,
             profile=profile,
+            strict_pins=strict_pins,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the
