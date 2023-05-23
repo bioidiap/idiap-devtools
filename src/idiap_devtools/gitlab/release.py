@@ -19,6 +19,7 @@ import gitlab.v4.objects
 import packaging.version
 import tomlkit
 
+from git import Repo
 from idiap_devtools.profile import Profile
 
 logger = logging.getLogger(__name__)
@@ -300,13 +301,14 @@ def _update_pyproject(
     version: str,
     default_branch: str,
     update_urls: bool,
-    dependencies_versions: list[Requirement] | None = None,
+    profile: Profile | None = None,
     strict_pins: bool = False,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
     - Sets the project.version field to the given version.
-    - Pins the dependencies version to the ones in the given dictionary.
+    - Pins the dependencies version to the ones in the given dev-profile.
+    - Saves the dev-profile's url and commit in the pyproject.toml.
     - Updates the documentation URLs to point specifically to the given version.
 
     Arguments:
@@ -320,12 +322,11 @@ def _update_pyproject(
         update_urls: If set to ``True``, then also updates the relevant URL
           links considering the version number provided at ``version``.
 
-        dependencies_versions: A list of :any:`pkg_resource.Requirements` mapping an
-          external package name to it's supported version . If not provided, the
-          dependencies in the ``pyproject.toml`` file will be left unchanged.
+        profile: Used to retrieve and note the current dev-profile commit.
 
         strict_pins: If ``True``, will pin dependencies with exact pins (``==``),
           otherwise, will try pin them with compatible pins (``~=``).
+
 
     Returns:
 
@@ -362,13 +363,15 @@ def _update_pyproject(
         )
 
     # Pinning of the dependencies packages version
-    if dependencies_versions is not None:
+    if profile is not None:
+        dependencies_pins = profile.python_constraints()
+
         # Main dependencies
         logger.info("Pinning versions of dependencies.")
         pkg_deps = data.get("project", {}).get("dependencies", [])
         pkg_deps = _pin_versions_of_packages_list(
             packages_list=pkg_deps,
-            dependencies_versions=dependencies_versions,
+            dependencies_versions=dependencies_pins,
             strict=strict_pins,
         )
 
@@ -381,9 +384,45 @@ def _update_pyproject(
             )
             opt_pkg_deps[pkg_group] = _pin_versions_of_packages_list(
                 packages_list=pkg_deps,
-                dependencies_versions=dependencies_versions,
+                dependencies_versions=dependencies_pins,
                 strict=strict_pins,
             )
+
+        # Registering dev-profile version
+        logger.info("Annotating pyproject with current dev-profile commit.")
+        logger.debug("Using dev-profile at '%s'", profile._basedir)
+        profile_repo = Repo(profile._basedir)
+        if profile_repo.is_dirty():
+            raise RuntimeError(
+                "dev-profile was modified and is dirty! Unable to ensure a commit "
+                "corresponds to the current state of that repository. Please "
+                "commit and push your changes."
+            )
+        logger.debug("Fetching origin of dev-profile.")
+        profile_repo.remotes.origin.fetch()
+        logger.debug("Checking that the local commits are available on origin.")
+        commits_ahead = [c for c in profile_repo.iter_commits("origin/main..HEAD")]
+        if len(commits_ahead) != 0:
+            raise RuntimeError(
+                "Local commits of dev-profile were not pushed to origin!\n"
+                f"(dev-profile HEAD is {len(commits_ahead)} commits ahead of origin).\n"
+                "Please 'git push' your modifications or revert them.\n"
+                "We enforce this so a dev-profile version can always be retrieved."
+            )
+        logger.debug("Checking we are up to date with origin.")
+        commits_behind = [c for c in profile_repo.iter_commits("HEAD..origin/main")]
+        if len(commits_behind) != 0:
+            logger.warning(
+                "Your local dev-profile is not up to date with the origin remote. "
+                "It is fine as long as you know what you are doing, but you should "
+                "consider 'git pull' the latest changes. (dev-profile HEAD is %d "
+                "commits behind origin)",
+                len(commits_behind)
+            )
+        # Actually add the dev-profile commit hash to pyproject.toml
+        data["profile"] = tomlkit.table()
+        data["profile"].add("repository_url", profile_repo.remotes.origin.url)
+        data["profile"].add("commit_hash", profile_repo.commit("HEAD").hexsha)
 
     if not update_urls:
         return tomlkit.dumps(data)
@@ -753,15 +792,13 @@ def release_package(
         file_path="pyproject.toml", ref=gitpkg.default_branch
     )
 
-    dependencies_pins = profile.python_constraints() if profile is not None else profile
-
     pyproject_contents_orig = pyproject_file.decode().decode()
     pyproject_contents = _update_pyproject(
         contents=pyproject_contents_orig,
         version=version_number,
         default_branch=gitpkg.default_branch,
         update_urls=True,
-        dependencies_versions=dependencies_pins,
+        profile=profile,
         strict_pins=strict_pins,
     )
     if dry_run:
