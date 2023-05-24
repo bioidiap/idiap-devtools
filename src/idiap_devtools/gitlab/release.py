@@ -129,6 +129,8 @@ def _pin_versions_of_packages_list(
 ) -> list[str]:
     """Adds its version to each package according to a dictionary of versions.
 
+    Modifies ``pacakages_list`` in-place.
+
     Iterates over ``packages_list`` and sets the version to be the corresponding one in
     ``dependencies_versions``.
 
@@ -158,21 +160,17 @@ def _pin_versions_of_packages_list(
         strict: If ``True``, the pins will be converted to exact match (``==``),
             otherwise they are converted to compatible match (``~=``).
 
-    Returns:
-
-        ``packages_list`` edited with the versions pinned.
-
     Raises:
 
         - ``ValueError`` if a version in ``dependencies_versions`` conflicts with an
         already present pinning.
     """
 
-    logger.debug(
-        "Pinning packages:\n%s\nDesired versions:\n%s",
-        packages_list,
-        dependencies_versions,
-    )
+    # logger.debug(
+    #     "Pinning packages:\n%s\nDesired versions:\n%s",
+    #     packages_list,
+    #     dependencies_versions,
+    # )
 
     # Check that there is not the same dependency twice in the pins
     seen = set()
@@ -189,8 +187,7 @@ def _pin_versions_of_packages_list(
     results = []
 
     # package is the dependency we want to pin
-    for package in packages_list:
-
+    for pkg_id, package in enumerate(packages_list):
         results.append(package)
 
         # Get the dependency package version specifier if already present.
@@ -220,7 +217,6 @@ def _pin_versions_of_packages_list(
                 desired_pin.url,
             )
         else:
-
             # Build the 'specs' field
             if len(desired_pin.specs) == 0:
                 logger.warning(
@@ -237,7 +233,7 @@ def _pin_versions_of_packages_list(
                         f"Specified version of package '{pkg_req}' not compatible with "
                         f"desired version '{desired_pin.specs}' from constraints!"
                     )
-            desired_specs = pkg_req.specs
+            desired_specs = desired_pin.specs
             if strict and len(desired_specs) == 1:
                 desired_specs[0] = "==", desired_specs[0][1]
             elif not strict and len(desired_specs) == 1:
@@ -277,23 +273,30 @@ def _pin_versions_of_packages_list(
             )
 
         extras_str = ""
-        if desired_pin.extras is not None:
+        if desired_pin.extras is not None and len(desired_pin.extras) > 0:
             extras_str = f"[{','.join(desired_pin.extras)}]"
-        elif pkg_req.extras is not None:
+        elif pkg_req.extras is not None and len(pkg_req.extras) > 0:
             extras_str = f"[{','.join(pkg_req.extras)}]"
 
         # Assemble the dependency specification in one string
         if desired_pin.url is not None:
             final_str = "".join(
-                (pkg_req.key, extras_str, "@ ", desired_pin.url, " ", marker_str)
+                (
+                    pkg_req.key,
+                    extras_str,
+                    "@ ",
+                    desired_pin.url,
+                    " ",
+                    marker_str,
+                )
             )
         else:
-            final_str = "".join((pkg_req.key, extras_str, specs_str, marker_str))
+            final_str = "".join(
+                (pkg_req.key, extras_str, specs_str, marker_str)
+            )
 
         # Replace the package specification with the pinned version
-        results[-1] = str(Requirement.parse(final_str))
-
-    return results
+        packages_list[pkg_id] = str(Requirement.parse(final_str))
 
 
 def _update_pyproject(
@@ -369,11 +372,11 @@ def _update_pyproject(
         # Main dependencies
         logger.info("Pinning versions of dependencies.")
         pkg_deps = data.get("project", {}).get("dependencies", [])
-        pkg_deps = _pin_versions_of_packages_list(
+        _pin_versions_of_packages_list(
             packages_list=pkg_deps,
             dependencies_versions=dependencies_pins,
             strict=strict_pins,
-        )
+        ),
 
         # Optional dependencies
         opt_pkg_deps = data.get("project", {}).get("optional-dependencies", [])
@@ -382,7 +385,7 @@ def _update_pyproject(
                 "Pinning versions of optional dependencies group `%s`.",
                 pkg_group,
             )
-            opt_pkg_deps[pkg_group] = _pin_versions_of_packages_list(
+            _pin_versions_of_packages_list(
                 packages_list=pkg_deps,
                 dependencies_versions=dependencies_pins,
                 strict=strict_pins,
@@ -401,7 +404,9 @@ def _update_pyproject(
         logger.debug("Fetching origin of dev-profile.")
         profile_repo.remotes.origin.fetch()
         logger.debug("Checking that the local commits are available on origin.")
-        commits_ahead = [c for c in profile_repo.iter_commits("origin/main..HEAD")]
+        commits_ahead = [
+            c for c in profile_repo.iter_commits("origin/main..HEAD")
+        ]
         if len(commits_ahead) != 0:
             raise RuntimeError(
                 "Local commits of dev-profile were not pushed to origin!\n"
@@ -410,14 +415,16 @@ def _update_pyproject(
                 "We enforce this so a dev-profile version can always be retrieved."
             )
         logger.debug("Checking we are up to date with origin.")
-        commits_behind = [c for c in profile_repo.iter_commits("HEAD..origin/main")]
+        commits_behind = [
+            c for c in profile_repo.iter_commits("HEAD..origin/main")
+        ]
         if len(commits_behind) != 0:
             logger.warning(
                 "Your local dev-profile is not up to date with the origin remote. "
                 "It is fine as long as you know what you are doing, but you should "
                 "consider 'git pull' the latest changes. (dev-profile HEAD is %d "
                 "commits behind origin)",
-                len(commits_behind)
+                len(commits_behind),
             )
         # Actually add the dev-profile commit hash to pyproject.toml
         data["profile"] = tomlkit.table()
