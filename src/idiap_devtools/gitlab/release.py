@@ -109,7 +109,7 @@ def _compatible_pins(
     if restriction is None or len(desired_pin) < 1:
         return True
 
-    if len(desired_pin) == 1 and desired_pin[0] == "==":
+    if len(desired_pin) == 1 and desired_pin[0][0] == "==":
         return desired_pin[0][1] in restriction
 
     logger.warning(
@@ -237,8 +237,8 @@ def _pin_versions_of_packages_list(
             if strict and len(desired_specs) == 1:
                 desired_specs[0] = "==", desired_specs[0][1]
             elif not strict and len(desired_specs) == 1:
-                if desired_specs[0] == "==":
-                    desired_specs[0] = "~=", desired_specs[1]
+                if desired_specs[0][0] == "==":
+                    desired_specs[0] = "~=", desired_specs[0][1]
                 else:
                     logger.warning(
                         "Pin %s not converted to 'compatible' (~=) pin.",
@@ -428,8 +428,14 @@ def _update_pyproject(
             )
         # Actually add the dev-profile commit hash to pyproject.toml
         data["profile"] = tomlkit.table()
-        data["profile"].add("repository_url", profile_repo.remotes.origin.url)
-        data["profile"].add("commit_hash", profile_repo.commit("HEAD").hexsha)
+        data["profile"].add(
+            "repository_url",
+            tomlkit.item(profile_repo.remotes.origin.url).indent(4),
+        )
+        data["profile"].add(
+            "commit_hash",
+            tomlkit.item(profile_repo.commit("HEAD").hexsha).indent(4),
+        )
 
     if not update_urls:
         return tomlkit.dumps(data)
