@@ -8,11 +8,11 @@ import typing
 
 import click
 
-from ...click import PreserveIndentCommand, verbosity_option
-from ...logging import setup
-
 from idiap_devtools.click import validate_profile
 from idiap_devtools.profile import Profile
+
+from ...click import PreserveIndentCommand, verbosity_option
+from ...logging import setup
 
 logger = setup(__name__.split(".", 1)[0])
 
@@ -69,7 +69,11 @@ Examples:
 )
 @verbosity_option(logger=logger)
 def release(
-    changelog: typing.TextIO, dry_run: bool, profile: str, strict_pins: bool, **_
+    changelog: typing.TextIO,
+    dry_run: bool,
+    profile: str,
+    strict_pins: bool,
+    **_,
 ) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
 
@@ -142,13 +146,17 @@ def release(
         )
     else:
         profile = validate_profile(None, None, profile)
-        logger.info("Loading profile '%s' for dependencies version pinning.", profile)
-        profile = Profile(profile)
+        logger.info(
+            "Loading profile '%s' for dependencies version pinning.", profile
+        )
+        loaded_profile = Profile(profile)
 
         if strict_pins:
             logger.info("Will use strict pinning (==) for the dependencies.")
         else:
-            logger.info("Will use compatible pinning (~=) for the dependencies.")
+            logger.info(
+                "Will use compatible pinning (~=) for the dependencies."
+            )
 
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
@@ -233,7 +241,7 @@ def release(
             tag_name=vtag,
             tag_comments=description_text,
             dry_run=dry_run,
-            profile=profile,
+            profile=loaded_profile,
             strict_pins=strict_pins,
         )
         if not dry_run:

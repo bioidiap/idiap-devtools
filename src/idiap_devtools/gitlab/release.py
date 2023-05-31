@@ -12,7 +12,6 @@ import re
 import time
 
 from distutils.version import StrictVersion
-from pkg_resources import Requirement
 
 import gitlab
 import gitlab.v4.objects
@@ -20,6 +19,8 @@ import packaging.version
 import tomlkit
 
 from git import Repo
+from pkg_resources import Requirement
+
 from idiap_devtools.profile import Profile
 
 logger = logging.getLogger(__name__)
@@ -94,8 +95,8 @@ def _update_readme(
 
 
 def _compatible_pins(
-    desired_pin: list[tuple(str, str)], restriction: Requirement | None
-):
+    desired_pin: list[tuple[str, str]], restriction: Requirement | None
+) -> bool:
     """Returns wether the desired version pin is within ``restriction``.
 
     A ``restriction`` of ``None`` will always return ``True``.
@@ -297,6 +298,8 @@ def _pin_versions_of_packages_list(
 
         # Replace the package specification with the pinned version
         packages_list[pkg_id] = str(Requirement.parse(final_str))
+
+    return packages_list
 
 
 def _update_pyproject(
