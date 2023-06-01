@@ -94,35 +94,6 @@ def _update_readme(
     return "\n".join(new_contents) + "\n"
 
 
-def _compatible_pins(
-    desired_pin: list[tuple[str, str]], restriction: Requirement | None
-) -> bool:
-    """Returns wether the desired version pin is within ``restriction``.
-
-    A ``restriction`` of ``None`` will always return ``True``.
-
-    Arguments:
-
-        desired_pin: The version pinning in the form ``1.2.3``.
-
-        restriction: A requirement with version specifiers (with e.g. ``>= 1.2``).
-    """
-    if restriction is None or len(desired_pin) < 1:
-        return True
-
-    if len(desired_pin) == 1 and desired_pin[0][0] == "==":
-        return desired_pin[0][1] in restriction
-
-    logger.warning(
-        "Complex dependency pinning for '%s':\n"
-        "  trying to pin with '%s'.\n"
-        "  The compatibility between them will not be checked!",
-        restriction,
-        desired_pin,
-    )
-    return True
-
-
 def _pin_versions_of_packages_list(
     packages_list: list[str],
     dependencies_versions: list[Requirement],
@@ -131,24 +102,15 @@ def _pin_versions_of_packages_list(
 
     Modifies ``packages_list`` in-place.
 
-    Iterates over ``packages_list`` and sets the version to be the corresponding one in
-    ``dependencies_versions``.
+    Iterates over ``packages_list`` and sets the version to be the corresponding
+    one in ``dependencies_versions``.
 
     Edge cases:
 
-        **Package not in ``dependencies_versions``**: The package will not be pinned.
+        **Package not in ``dependencies_versions``**: The package will not be
+            pinned.
 
-        **Package already has a compatible version pinning**: The version in
-        ``dependencies_versions`` will overwrite the current version if compatible.
-
-        **Package already has a version that conflicts with the desired one**: Raises a
-        ``ValueError``.
-
-    Limitations:
-
-        - If the dependency already has a version specifier (in ``pyproject.toml``), we
-            only check the pin is compatible with it if the pin is an equality specifier
-            (``tensorflow >=2.0, <3.0.0`` will not be checked for compatibility).
+        **Package already has version specifier**: Raises a ``ValueError``.
 
     Arguments:
 
@@ -159,22 +121,17 @@ def _pin_versions_of_packages_list(
 
     Raises:
 
-        - ``ValueError`` if a version in ``dependencies_versions`` conflicts with an
-        already present pinning.
+        ``ValueError`` if a version in ``dependencies_versions`` conflicts with
+        an already present pinning in ``packages_list``.
     """
-
-    # logger.debug(
-    #     "Pinning packages:\n%s\nDesired versions:\n%s",
-    #     packages_list,
-    #     dependencies_versions,
-    # )
 
     # Check that there is not the same dependency twice in the pins
     seen = set()
     for d in dependencies_versions:
         if d.key in seen:
             raise NotImplementedError(
-                "Pinning with more than one specification per dependency not supported."
+                "Pinning with more than one specification per dependency not"
+                "supported."
             )
         seen.add(d.key)
 
@@ -202,10 +159,20 @@ def _pin_versions_of_packages_list(
 
         if desired_pin is None:
             logger.warning(
-                "Dependency '%s' is not available in constraints. Skipping pinning.",
+                "Dependency '%s' is not available in constraints. Skipping "
+                "pinning. Consider adding this package to your dev-profile "
+                "constraints file.",
                 pkg_req.key,
             )
             continue
+
+        # A Requirement is composed of:
+        #   key[extras]@ url ; marker
+        # Or
+        #   key[extras]specifier; marker
+        # Where extras and marker are optional
+
+        # The following handles those different fields
 
         if desired_pin.url is not None:
             logger.info(
@@ -217,54 +184,43 @@ def _pin_versions_of_packages_list(
             # Build the 'specs' field
             if len(desired_pin.specs) == 0:
                 logger.warning(
-                    "Dependency %s has no version specifier. Skipping pinning.",
+                    "Dependency '%s' has no version specifier in constraints "
+                    "'%s'. Skipping pinning.",
                     pkg_req.key,
+                    desired_pin,
                 )
                 continue
 
             # If version specifiers are already present in that dependency
             if len(pkg_req.specs) > 0:
-                # Check compatibility of already present version
-                if not _compatible_pins(desired_pin.specs, pkg_req):
-                    raise ValueError(
-                        f"Specified version of package '{pkg_req}' not compatible with "
-                        f"desired version '{desired_pin.specs}' from constraints!"
-                    )
+                raise ValueError(
+                    f"You cannot specify a version for the dependency {pkg_req}"
+                )
             desired_specs = desired_pin.specs
 
             # Set the version of that dependency to the pinned one.
             specs_str = ",".join("".join(s) for s in desired_specs)
 
         # Build the 'marker' field
-        if (
-            desired_pin.marker is not None
-            and pkg_req.marker is not None
-            and str(desired_pin.marker) != str(pkg_req.marker)
-        ):
+        if pkg_req.marker is not None:
             raise ValueError(
-                "There is a conflict between markers in the package specification "
-                f"({pkg_req.marker}) and the constraints ({desired_pin.marker})!"
+                f"You can not specify a marker for the dependency {pkg_req}! "
+                f"({pkg_req.marker})"
             )
         marker_str = ""
         if desired_pin.marker is not None:
             marker_str = f"; {desired_pin.marker}"
 
         # Build the 'extras' field
-        if (
-            desired_pin.extras is not None
-            and pkg_req.extras is not None
-            and desired_pin.extras != pkg_req.extras
-        ):
+        if len(pkg_req.extras) > 0:
             raise ValueError(
-                "There is a conflict between extras in the package specification "
-                f"({pkg_req.extras}) and the constraints ({desired_pin.extras})!"
+                f"You can not specify extras for the dependency {pkg_req}! "
+                f"({pkg_req.extras})"
             )
 
         extras_str = ""
-        if desired_pin.extras is not None and len(desired_pin.extras) > 0:
+        if len(desired_pin.extras) > 0:
             extras_str = f"[{','.join(desired_pin.extras)}]"
-        elif pkg_req.extras is not None and len(pkg_req.extras) > 0:
-            extras_str = f"[{','.join(pkg_req.extras)}]"
 
         # Assemble the dependency specification in one string
         if desired_pin.url is not None:
@@ -285,6 +241,7 @@ def _pin_versions_of_packages_list(
 
         # Replace the package specification with the pinned version
         packages_list[pkg_id] = str(Requirement.parse(final_str))
+        logger.debug("Package pinned: %s", packages_list[pkg_id])
 
     return packages_list
 
@@ -380,9 +337,9 @@ def _update_pyproject(
         profile_repo = Repo(profile._basedir)
         if profile_repo.is_dirty():
             raise RuntimeError(
-                "dev-profile was modified and is dirty! Unable to ensure a commit "
-                "corresponds to the current state of that repository. Please "
-                "commit and push your changes."
+                "dev-profile was modified and is dirty! Unable to ensure a "
+                "commit corresponds to the current state of that repository. "
+                "Please commit and push your changes."
             )
         logger.debug("Fetching origin of dev-profile.")
         profile_repo.remotes.origin.fetch()
@@ -393,9 +350,11 @@ def _update_pyproject(
         if len(commits_ahead) != 0:
             raise RuntimeError(
                 "Local commits of dev-profile were not pushed to origin!\n"
-                f"(dev-profile HEAD is {len(commits_ahead)} commits ahead of origin).\n"
+                f"(dev-profile HEAD is {len(commits_ahead)} commits ahead of "
+                "origin).\n "
                 "Please 'git push' your modifications or revert them.\n"
-                "We enforce this so a dev-profile version can always be retrieved."
+                "We enforce this so a dev-profile version can always be "
+                "retrieved."
             )
         logger.debug("Checking we are up to date with origin.")
         commits_behind = [
@@ -403,10 +362,10 @@ def _update_pyproject(
         ]
         if len(commits_behind) != 0:
             logger.warning(
-                "Your local dev-profile is not up to date with the origin remote. "
-                "It is fine as long as you know what you are doing, but you should "
-                "consider 'git pull' the latest changes. (dev-profile HEAD is %d "
-                "commits behind origin)",
+                "Your local dev-profile is not up to date with the origin "
+                "remote. It is fine as long as you know what you are doing, "
+                "but you should consider 'git pull' the latest changes.\n"
+                "(dev-profile HEAD is %d commits behind origin)",
                 len(commits_behind),
             )
         # Actually add the dev-profile commit hash to pyproject.toml
@@ -755,8 +714,9 @@ def release_package(
 
         dry_run: If ``True``, nothing will be committed or pushed to GitLab
 
-        profile: An instance of :class:`idiap_devtools.profile.Profile` used to retrieve
-            the specifiers to pin the package's dependencies in ``pyproject.toml``.
+        profile: An instance of :class:`idiap_devtools.profile.Profile` used to
+            retrieve the specifiers to pin the package's dependencies in
+            ``pyproject.toml``.
 
     Returns:
 
