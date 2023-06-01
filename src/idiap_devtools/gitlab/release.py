@@ -126,11 +126,10 @@ def _compatible_pins(
 def _pin_versions_of_packages_list(
     packages_list: list[str],
     dependencies_versions: list[Requirement],
-    strict: bool = False,
 ) -> list[str]:
     """Adds its version to each package according to a dictionary of versions.
 
-    Modifies ``pacakages_list`` in-place.
+    Modifies ``packages_list`` in-place.
 
     Iterates over ``packages_list`` and sets the version to be the corresponding one in
     ``dependencies_versions``.
@@ -157,9 +156,6 @@ def _pin_versions_of_packages_list(
 
         dependencies_versions: All the known packages with their desired version
             pinning.
-
-        strict: If ``True``, the pins will be converted to exact match (``==``),
-            otherwise they are converted to compatible match (``~=``).
 
     Raises:
 
@@ -235,16 +231,7 @@ def _pin_versions_of_packages_list(
                         f"desired version '{desired_pin.specs}' from constraints!"
                     )
             desired_specs = desired_pin.specs
-            if strict and len(desired_specs) == 1:
-                desired_specs[0] = "==", desired_specs[0][1]
-            elif not strict and len(desired_specs) == 1:
-                if desired_specs[0][0] == "==":
-                    desired_specs[0] = "~=", desired_specs[0][1]
-                else:
-                    logger.warning(
-                        "Pin %s not converted to 'compatible' (~=) pin.",
-                        desired_pin,
-                    )
+
             # Set the version of that dependency to the pinned one.
             specs_str = ",".join("".join(s) for s in desired_specs)
 
@@ -308,7 +295,6 @@ def _update_pyproject(
     default_branch: str,
     update_urls: bool,
     profile: Profile | None = None,
-    strict_pins: bool = False,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
@@ -319,7 +305,7 @@ def _update_pyproject(
 
     Arguments:
 
-        context: Text of the ``pyproject.toml`` file from a package
+        contents: Text of the ``pyproject.toml`` file from a package
 
         version: Format of the version string is '#.#.#'
 
@@ -329,10 +315,6 @@ def _update_pyproject(
           links considering the version number provided at ``version``.
 
         profile: Used to retrieve and note the current dev-profile commit.
-
-        strict_pins: If ``True``, will pin dependencies with exact pins (``==``),
-          otherwise, will try pin them with compatible pins (``~=``).
-
 
     Returns:
 
@@ -378,7 +360,6 @@ def _update_pyproject(
         _pin_versions_of_packages_list(
             packages_list=pkg_deps,
             dependencies_versions=dependencies_pins,
-            strict=strict_pins,
         ),
 
         # Optional dependencies
@@ -391,7 +372,6 @@ def _update_pyproject(
             _pin_versions_of_packages_list(
                 packages_list=pkg_deps,
                 dependencies_versions=dependencies_pins,
-                strict=strict_pins,
             )
 
         # Registering dev-profile version
@@ -757,7 +737,6 @@ def release_package(
     tag_comments: str,
     dry_run: bool = False,
     profile: Profile | None = None,
-    strict_pins: bool = False,
 ) -> int | None:
     """Releases a package.
 
@@ -778,9 +757,6 @@ def release_package(
 
         profile: An instance of :class:`idiap_devtools.profile.Profile` used to retrieve
             the specifiers to pin the package's dependencies in ``pyproject.toml``.
-
-        strict_pins: If ``True``, will pin dependencies with exact version pins (``==``)
-            otherwise, will try to pin with compatible pins (``~=``).
 
     Returns:
 
@@ -815,7 +791,6 @@ def release_package(
         default_branch=gitpkg.default_branch,
         update_urls=True,
         profile=profile,
-        strict_pins=strict_pins,
     )
     if dry_run:
         d = _get_differences(

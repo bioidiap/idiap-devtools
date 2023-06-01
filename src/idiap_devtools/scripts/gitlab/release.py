@@ -60,19 +60,11 @@ Examples:
     "(combine with the verbosity flags - e.g. ``-vvv``) to enable "
     "printing to help you understand what will be done",
 )
-@click.option(
-    "-s",
-    "--strict-pins",
-    is_flag=True,
-    help="Do not convert strict version pins (==) to compatible version pins (~=) when "
-    "pinning version based on a profile.",
-)
 @verbosity_option(logger=logger)
 def release(
     changelog: typing.TextIO,
     dry_run: bool,
     profile: str,
-    strict_pins: bool,
     **_,
 ) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
@@ -95,9 +87,6 @@ def release(
 
     When a dev-profile is given (with ``--profile``), the versions of the dependencies
     in ``pyproject.toml`` will be pinned to those of the ``constraints.txt`` file.
-    By default, (without ``--strict``), the versions will be restricted with a
-    "compatible" pin (``~=``). If ``--strict`` is set, all the versions will be pinned
-    with an "exact" pin (``==``).
 
     The changelog is expected to have the following structure:
 
@@ -150,13 +139,6 @@ def release(
             "Loading profile '%s' for dependencies version pinning.", profile
         )
         loaded_profile = Profile(profile)
-
-        if strict_pins:
-            logger.info("Will use strict pinning (==) for the dependencies.")
-        else:
-            logger.info(
-                "Will use compatible pinning (~=) for the dependencies."
-            )
 
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
@@ -242,7 +224,6 @@ def release(
             tag_comments=description_text,
             dry_run=dry_run,
             profile=loaded_profile,
-            strict_pins=strict_pins,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the
