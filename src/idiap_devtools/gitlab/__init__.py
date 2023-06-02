@@ -13,6 +13,7 @@ import tarfile
 import tempfile
 
 from io import BytesIO
+from typing import Union
 
 import gitlab
 import gitlab.v4.objects
@@ -47,8 +48,8 @@ def get_gitlab_instance() -> gitlab.Gitlab:
 def download_path(
     package: gitlab.v4.objects.projects.Project,
     path: str,
-    output: pathlib.Path | None = None,
-    ref: str | None = None,
+    output: Union[pathlib.Path, None] = None,
+    ref: Union[str, None] = None,
 ) -> None:
     """Downloads paths from gitlab, with an optional recurse.
 
