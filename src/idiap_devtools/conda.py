@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 @contextlib.contextmanager
 def root_logger_protection():
-    """Protects the root logger against spurious (conda) manipulation."""
+    """Protects the root logger against spurious (conda) manipulation.
+
+    Still to verify: conda does some operations on loggers at import, so
+    we may need to put the import inside this context manager too.
+    """
     root_logger = logging.getLogger()
     level = root_logger.level
     handlers = copy.copy(root_logger.handlers)

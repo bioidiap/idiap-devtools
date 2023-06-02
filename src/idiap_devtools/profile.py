@@ -9,7 +9,6 @@ import os
 import pathlib
 import typing
 
-import conda_build.config
 import pkg_resources
 import tomli
 import xdg
@@ -124,7 +123,7 @@ class Profile:
 
     def conda_config(
         self, python: str, public: bool, stable: bool
-    ) -> conda_build.config.Config:
+    ) -> typing.Any:
         """Builds the conda-configuration to use based on the profile.
 
         Arguments:
@@ -138,6 +137,11 @@ class Profile:
             stable: Set to ``True`` if we should only consider stable versions
               of packages, as opposed to pre-release ones (beta packages).  Set
               to ``False`` otherwise.
+
+        return_type:
+            conda_build.config.Config: A dictionary containing the merged
+              configuration, as produced by conda-build API's
+              get_or_merge_config() function.
         """
 
         baserc = self.data.get("conda", {}).get("baserc")
