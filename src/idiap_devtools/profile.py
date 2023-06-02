@@ -94,6 +94,12 @@ def get_profile_path(name: str | pathlib.Path) -> pathlib.Path | None:
     return pathlib.Path(os.path.expanduser(value))
 
 
+# Allowing typing with conda classes without importing conda packages:
+CondaConfig: typing.TypeAlias = (
+    "conda_build.config.Config"  # type: ignore # noqa: F821
+)
+
+
 class Profile:
     """A class representing the development profile.
 
@@ -123,7 +129,7 @@ class Profile:
 
     def conda_config(
         self, python: str, public: bool, stable: bool
-    ) -> typing.Any:
+    ) -> CondaConfig:
         """Builds the conda-configuration to use based on the profile.
 
         Arguments:
@@ -138,10 +144,10 @@ class Profile:
               of packages, as opposed to pre-release ones (beta packages).  Set
               to ``False`` otherwise.
 
-        return_type:
-            conda_build.config.Config: A dictionary containing the merged
-              configuration, as produced by conda-build API's
-              get_or_merge_config() function.
+        Returns:
+
+            A dictionary containing the merged configuration, as produced by
+            conda-build API's get_or_merge_config() function.
         """
 
         baserc = self.data.get("conda", {}).get("baserc")
