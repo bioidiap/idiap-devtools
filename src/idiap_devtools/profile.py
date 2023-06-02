@@ -123,7 +123,9 @@ class Profile:
 
     def conda_config(
         self, python: str, public: bool, stable: bool
-    ) -> typing.Any:
+    ) -> typing.Any:  # Using Any as type, as either flake8, mypy, or sphinx
+        # will complain about conda otherwise. Will anyway be fixed when
+        # resolving https://gitlab.idiap.ch/software/idiap-devtools/-/issues/3
         """Builds the conda-configuration to use based on the profile.
 
         Arguments:
