@@ -18,6 +18,11 @@ import gitlab.v4.objects
 import packaging.version
 import tomlkit
 
+from git import Repo
+from pkg_resources import Requirement
+
+from idiap_devtools.profile import Profile
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +63,7 @@ def _update_readme(
     # matches the graphical badge in the readme's text with the given version
     DOC_IMAGE = re.compile(r"docs\-(" + "|".join(variants) + r")\-", re.VERBOSE)
 
-    # matches all other occurences we need to handle
+    # matches all other occurrences we need to handle
     BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     new_contents = []
@@ -89,17 +94,175 @@ def _update_readme(
     return "\n".join(new_contents) + "\n"
 
 
+def _pin_versions_of_packages_list(
+    packages_list: list[str],
+    dependencies_versions: list[Requirement],
+) -> list[str]:
+    """Adds its version to each package according to a dictionary of versions.
+
+    Modifies ``packages_list`` in-place.
+
+    Iterates over ``packages_list`` and sets the version to be the corresponding
+    one in ``dependencies_versions``.
+
+    Edge cases:
+
+        **Package not in ``dependencies_versions``**: The package will not be
+            pinned.
+
+        **Package already has version specifier**: Raises a ``ValueError``.
+
+    Arguments:
+
+        packages_list: The packages to pin.
+
+        dependencies_versions: All the known packages with their desired version
+            pinning.
+
+    Raises:
+
+        ``ValueError`` if a version in ``dependencies_versions`` conflicts with
+        an already present pinning in ``packages_list``.
+    """
+
+    # Check that there is not the same dependency twice in the pins
+    seen = set()
+    for d in dependencies_versions:
+        if d.key in seen:
+            raise NotImplementedError(
+                "Pinning with more than one specification per dependency not"
+                "supported."
+            )
+        seen.add(d.key)
+
+    # Make it easier to retrieve the dependency pin for each package.
+    dependencies_dict = {d.key: d for d in dependencies_versions}
+
+    results = []
+
+    # package is the dependency we want to pin
+    for pkg_id, package in enumerate(packages_list):
+        results.append(package)
+
+        # Get the dependency package version specifier if already present.
+        pkg_req = Requirement.parse(package)
+
+        if pkg_req.url is not None:
+            logger.warning(
+                "Ignoring dependency '%s' as it is specified with a url (%s).",
+                pkg_req.key,
+                pkg_req.url,
+            )
+
+        # Retrieve this dependency's constraint Requirement object
+        desired_pin = dependencies_dict.get(pkg_req.key)
+
+        if desired_pin is None:
+            logger.warning(
+                "Dependency '%s' is not available in constraints. Skipping "
+                "pinning. Consider adding this package to your dev-profile "
+                "constraints file.",
+                pkg_req.key,
+            )
+            continue
+
+        # A Requirement is composed of:
+        #   key[extras]@ url ; marker
+        # Or
+        #   key[extras]specifier; marker
+        # Where extras and marker are optional
+
+        # The following handles those different fields
+
+        if desired_pin.url is not None:
+            logger.info(
+                "Pinning of %s will be done with a URL (%s).",
+                pkg_req.key,
+                desired_pin.url,
+            )
+        else:
+            # Build the 'specs' field
+            if len(desired_pin.specs) == 0:
+                logger.warning(
+                    "Dependency '%s' has no version specifier in constraints "
+                    "'%s'. Skipping pinning.",
+                    pkg_req.key,
+                    desired_pin,
+                )
+                continue
+
+            # If version specifiers are already present in that dependency
+            if len(pkg_req.specs) > 0:
+                raise ValueError(
+                    f"You cannot specify a version for the dependency {pkg_req}"
+                )
+            desired_specs = desired_pin.specs
+
+            # Set the version of that dependency to the pinned one.
+            specs_str = ",".join("".join(s) for s in desired_specs)
+
+        # Build the 'marker' field
+        if pkg_req.marker is not None:
+            raise ValueError(
+                f"You can not specify a marker for the dependency {pkg_req}! "
+                f"({pkg_req.marker})"
+            )
+        marker_str = ""
+        if desired_pin.marker is not None:
+            marker_str = f"; {desired_pin.marker}"
+
+        # Build the 'extras' field
+        if len(pkg_req.extras) > 0:
+            raise ValueError(
+                f"You can not specify extras for the dependency {pkg_req}! "
+                f"({pkg_req.extras})"
+            )
+
+        extras_str = ""
+        if len(desired_pin.extras) > 0:
+            extras_str = f"[{','.join(desired_pin.extras)}]"
+
+        # Assemble the dependency specification in one string
+        if desired_pin.url is not None:
+            final_str = "".join(
+                (
+                    pkg_req.key,
+                    extras_str,
+                    "@ ",
+                    desired_pin.url,
+                    " ",
+                    marker_str,
+                )
+            )
+        else:
+            final_str = "".join(
+                (pkg_req.key, extras_str, specs_str, marker_str)
+            )
+
+        # Replace the package specification with the pinned version
+        packages_list[pkg_id] = str(Requirement.parse(final_str))
+        logger.debug("Package pinned: %s", packages_list[pkg_id])
+
+    return packages_list
+
+
 def _update_pyproject(
     contents: str,
     version: str,
     default_branch: str,
     update_urls: bool,
+    profile: Profile | None = None,
 ) -> str:
     """Updates contents of pyproject.toml to make it release/latest ready.
 
+    - Sets the project.version field to the given version.
+    - Pins the dependencies version to the ones in the given dev-profile.
+    - Saves the dev-profile's url and commit in the pyproject.toml.
+    - Updates the documentation URLs to point specifically to the given version.
+
     Arguments:
 
-        context: Text of the ``pyproject.toml`` file from a package
+        contents: Text of the ``pyproject.toml`` file from a package
 
         version: Format of the version string is '#.#.#'
 
@@ -107,6 +270,8 @@ def _update_pyproject(
 
         update_urls: If set to ``True``, then also updates the relevant URL
           links considering the version number provided at ``version``.
+
+        profile: Used to retrieve and note the current dev-profile commit.
 
     Returns:
 
@@ -129,18 +294,95 @@ def _update_pyproject(
         re.match(packaging.version.VERSION_PATTERN, version, re.VERBOSE)
         is not None
     ):
+        logger.info(
+            "Updating pyproject.toml version from '%s' to '%s'",
+            data.get("project", {}).get("version", "unknown version"),
+            version,
+        )
         data["project"]["version"] = version
 
     else:
         logger.info(
-            f"Not setting project version on pyproject.toml as it is "
-            f"not PEP-440 compliant (value read: `{version}')"
+            "Not setting project version on pyproject.toml as it is "
+            f"not PEP-440 compliant (given value: `{version}')"
+        )
+
+    # Pinning of the dependencies packages version
+    if profile is not None:
+        dependencies_pins = profile.python_constraints()
+
+        # Main dependencies
+        logger.info("Pinning versions of dependencies.")
+        pkg_deps = data.get("project", {}).get("dependencies", [])
+        _pin_versions_of_packages_list(
+            packages_list=pkg_deps,
+            dependencies_versions=dependencies_pins,
+        ),
+
+        # Optional dependencies
+        opt_pkg_deps = data.get("project", {}).get("optional-dependencies", [])
+        for pkg_group in opt_pkg_deps:
+            logger.info(
+                "Pinning versions of optional dependencies group `%s`.",
+                pkg_group,
+            )
+            _pin_versions_of_packages_list(
+                packages_list=pkg_deps,
+                dependencies_versions=dependencies_pins,
+            )
+
+        # Registering dev-profile version
+        logger.info("Annotating pyproject with current dev-profile commit.")
+        logger.debug("Using dev-profile at '%s'", profile._basedir)
+        profile_repo = Repo(profile._basedir)
+        if profile_repo.is_dirty():
+            raise RuntimeError(
+                "dev-profile was modified and is dirty! Unable to ensure a "
+                "commit corresponds to the current state of that repository. "
+                "Please commit and push your changes."
+            )
+        logger.debug("Fetching origin of dev-profile.")
+        profile_repo.remotes.origin.fetch()
+        logger.debug("Checking that the local commits are available on origin.")
+        commits_ahead = [
+            c for c in profile_repo.iter_commits("origin/main..HEAD")
+        ]
+        if len(commits_ahead) != 0:
+            raise RuntimeError(
+                "Local commits of dev-profile were not pushed to origin!\n"
+                f"(dev-profile HEAD is {len(commits_ahead)} commits ahead of "
+                "origin).\n "
+                "Please 'git push' your modifications or revert them.\n"
+                "We enforce this so a dev-profile version can always be "
+                "retrieved."
+            )
+        logger.debug("Checking we are up to date with origin.")
+        commits_behind = [
+            c for c in profile_repo.iter_commits("HEAD..origin/main")
+        ]
+        if len(commits_behind) != 0:
+            logger.warning(
+                "Your local dev-profile is not up to date with the origin "
+                "remote. It is fine as long as you know what you are doing, "
+                "but you should consider 'git pull' the latest changes.\n"
+                "(dev-profile HEAD is %d commits behind origin)",
+                len(commits_behind),
+            )
+        # Actually add the dev-profile commit hash to pyproject.toml
+        data["profile"] = tomlkit.table()
+        data["profile"].add(
+            "repository_url",
+            tomlkit.item(profile_repo.remotes.origin.url).indent(4),
+        )
+        data["profile"].add(
+            "commit_hash",
+            tomlkit.item(profile_repo.commit("HEAD").hexsha).indent(4),
         )
 
     if not update_urls:
         return tomlkit.dumps(data)
 
-    # matches all other occurences we need to handle
+    # matches all other occurrences we need to handle
     BRANCH_RE = re.compile(r"/(" + "|".join(variants) + r")", re.VERBOSE)
 
     # sets the various URLs
@@ -183,7 +425,7 @@ def get_latest_tag_name(
         for tag in latest_tags
         if StrictVersion.version_re.match(tag.name[1:])
     ]
-    if not tag_names:  # no tags wee found.
+    if not tag_names:  # no tags were found.
         return None
     # sort them correctly according to each subversion number
     tag_names.sort(key=StrictVersion)
@@ -251,7 +493,7 @@ def get_next_version(
     if bump == "major":
         return f"v{int(major)+1}.0.0"
 
-    elif bump == "minor":
+    if bump == "minor":
         return f"v{major}.{int(minor)+1}.0"
 
     # it is a patch release, proceed with caution for pre-releases
@@ -271,7 +513,7 @@ def get_next_version(
     return f"v{major}.{minor}.{patch_int+1}"
 
 
-def update_files_at_defaul_branch(
+def update_files_at_default_branch(
     gitpkg: gitlab.v4.objects.projects.Project,
     files_dict: dict[str, str],
     message: str,
@@ -453,8 +695,9 @@ def release_package(
     tag_name: str,
     tag_comments: str,
     dry_run: bool = False,
+    profile: Profile | None = None,
 ) -> int | None:
-    """Release package.
+    """Releases a package.
 
     The provided tag will be annotated with a given list of comments. Files
     such as ``README.md`` and ``pyproject.toml`` will be updated according to
@@ -471,6 +714,9 @@ def release_package(
 
         dry_run: If ``True``, nothing will be committed or pushed to GitLab
 
+        profile: An instance of :class:`idiap_devtools.profile.Profile` used to
+            retrieve the specifiers to pin the package's dependencies in
+            ``pyproject.toml``.
 
     Returns:
 
@@ -504,6 +750,7 @@ def release_package(
         version=version_number,
         default_branch=gitpkg.default_branch,
         update_urls=True,
+        profile=profile,
     )
     if dry_run:
         d = _get_differences(
@@ -512,7 +759,7 @@ def release_package(
         logger.info(f"Changes to release (from latest):\n{d}")
 
     # commit and push changes
-    update_files_at_defaul_branch(
+    update_files_at_default_branch(
         gitpkg,
         {"README.md": readme_contents, "pyproject.toml": pyproject_contents},
         "Increased stable version to %s" % version_number,
@@ -553,7 +800,7 @@ def release_package(
         update_urls=False,
     )
     # commit and push changes
-    update_files_at_defaul_branch(
+    update_files_at_default_branch(
         gitpkg,
         {
             "README.md": readme_contents_orig,
