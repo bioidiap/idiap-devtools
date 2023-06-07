@@ -126,7 +126,7 @@ def badges(package, update_readme, dry_run, server, **_) -> None:
     import gitlab
 
     from ...gitlab import get_gitlab_instance
-    from ...gitlab.release import update_files_at_defaul_branch
+    from ...gitlab.release import update_files_at_default_branch
 
     if dry_run:
         click.secho("!!!! DRY RUN MODE !!!!", fg="yellow", bold=True)
@@ -187,7 +187,7 @@ def badges(package, update_readme, dry_run, server, **_) -> None:
             readme_content = _update_readme(readme_content, info)
             # commit and push changes
             logger.info("Changing README.md badges...")
-            update_files_at_defaul_branch(
+            update_files_at_default_branch(
                 use_package,
                 {"README.md": readme_content},
                 "Updated badges section [ci skip]",

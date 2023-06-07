@@ -8,6 +8,9 @@ import typing
 
 import click
 
+from idiap_devtools.click import validate_profile
+from idiap_devtools.profile import Profile
+
 from ...click import PreserveIndentCommand, verbosity_option
 from ...logging import setup
 
@@ -23,23 +26,32 @@ Examples:
 
      .. code:: sh
 
-        devtool gitlab release -vv changelog.md
+        devtool gitlab release --profile=default -vv changelog.md
 
      .. tip::
 
         In case of errors, just edit the changelog file to remove packages
         already released before relaunching the application.
 
-  2. The option `-dry-run` can be used to let the script print what it would
+  2. The option ``--dry-run`` can be used to let the script print what it would
      do instead of actually doing it:
 
      .. code:: sh
 
-        devtool gitlab release -vv --dry-run changelog.md
+        devtool gitlab release --profile=default -vv --dry-run changelog.md
 
 """,
 )
 @click.argument("changelog", type=click.File("rt", lazy=False))
+@click.option(
+    "-P",
+    "--profile",
+    default=None,
+    show_default=True,
+    help="Directory containing the development profile (and a file named "
+    "profile.toml), or the name of a configuration key pointing to the "
+    "development profile to use",
+)
 @click.option(
     "-d",
     "--dry-run/--no-dry-run",
@@ -49,23 +61,32 @@ Examples:
     "printing to help you understand what will be done",
 )
 @verbosity_option(logger=logger)
-def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
+def release(
+    changelog: typing.TextIO,
+    dry_run: bool,
+    profile: str,
+    **_,
+) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
 
     By using a CHANGELOG file as an input (e.g. that can be generated with the
     ``changelog`` command), this script goes through all packages listed (and
     in order):
 
-        * Modifies ``pyproject.toml`` with the new release number
+        * Modifies ``pyproject.toml`` with the new release number and pins the
+          dependencies according to the specified profile's constraints
         * Sets-up the README links to point to the correct pipeline and
           documentation for the package
         * Commits, tags and pushes the git project adding the changelog
           description for the GitLab release page
-        * Waits for the pipeline launched for the previous step to end
+        * Waits for the pipeline launched by the previous step to end
         * Bumps the package version again, to the next beta patch
         * Re-modifies the README to point to the "latest" documentation and
           pipeline versions
-        * Re-commits the whole with the option ``[ci skip]``.
+        * Re-commits and pushes the whole with the option ``[ci skip]``.
+
+    When a dev-profile is given (with ``--profile``), the versions of the dependencies
+    in ``pyproject.toml`` will be pinned to those of the ``constraints.txt`` file.
 
     The changelog is expected to have the following structure:
 
@@ -106,6 +127,18 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
     )
 
     gl = get_gitlab_instance()
+
+    if profile is None:
+        logger.warning(
+            "No dev-profile given. There will be no dependencies version pinning. "
+            "To enable pinning, set the --profile option."
+        )
+    else:
+        profile = validate_profile(None, None, profile)
+        logger.info(
+            "Loading profile '%s' for dependencies version pinning.", profile
+        )
+        loaded_profile = Profile(profile)
 
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
@@ -186,7 +219,11 @@ def release(changelog: typing.TextIO, dry_run: bool, **_) -> None:
 
         # release the package with the found tag and its comments
         pipeline_id = release_package(
-            use_package, vtag, description_text, dry_run
+            gitpkg=use_package,
+            tag_name=vtag,
+            tag_comments=description_text,
+            dry_run=dry_run,
+            profile=loaded_profile,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the
