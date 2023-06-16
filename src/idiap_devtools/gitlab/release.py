@@ -327,7 +327,7 @@ def _update_pyproject(
                 pkg_group,
             )
             _pin_versions_of_packages_list(
-                packages_list=pkg_deps,
+                packages_list=opt_pkg_deps[pkg_group],
                 dependencies_versions=dependencies_pins,
             )
 
