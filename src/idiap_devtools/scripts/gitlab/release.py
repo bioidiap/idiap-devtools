@@ -9,7 +9,7 @@ import typing
 import click
 
 from idiap_devtools.click import validate_profile
-from idiap_devtools.profile import Profile
+from idiap_devtools.profile import Profile, get_profile_path
 
 from ...click import PreserveIndentCommand, verbosity_option
 from ...logging import setup
@@ -112,7 +112,8 @@ def release(
 
     N.B.: When the option ``pin-dependencies`` is set, the versions of the
     dependencies in ``pyproject.toml`` will be pinned to those of the Python
-    ``constraints.txt`` file available in the select development profile.
+    ``constraints.txt`` file available in the select development profile
+    (choose using option ``--profile``).
 
     The changelog is expected to have the following structure:
 
@@ -154,9 +155,6 @@ def release(
 
     gl = get_gitlab_instance()
 
-    # 1. loads profile data
-    the_profile = Profile(profile)
-
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
     # wait until done to proceed to the next package
@@ -172,9 +170,22 @@ def release(
     ]
 
     if dry_run:
-        click.secho("!!!! DRY RUN MODE !!!!", fg="yellow", bold=True)
         click.secho(
-            "No changes will be committed to GitLab.", fg="yellow", bold=True
+            "DRY RUN MODE: No changes will be committed to GitLab.",
+            fg="yellow",
+            bold=True,
+        )
+
+    # loads profile data
+    if pin_dependencies:
+        the_profile = Profile(profile)
+        logger.info(
+            f"Pinning dependencies from profile `{get_profile_path(profile)}'...",
+        )
+    else:
+        the_profile = None
+        logger.warning(
+            "Not pinning dependencies (use --pin-dependencies to change this).",
         )
 
     for pkg_number, (header, line) in enumerate(pkgs):
@@ -240,7 +251,7 @@ def release(
             tag_name=vtag,
             tag_comments=description_text,
             dry_run=dry_run,
-            profile=the_profile if pin_dependencies else None,
+            profile=the_profile,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the
