@@ -8,7 +8,7 @@
 
 [project]
 name = "idiap-devtools"
-version = "1.0.1b0"
+version = "1.0.0b0"
 requires-python = ">=3.9"
 description = "This package contains a *pot-pourri* of various tools required to develop python packages at Idiap's GitLab infrastructure"
 readme = "README.md"
