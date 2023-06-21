@@ -40,7 +40,7 @@ dependencies = [
     ]
 
 [project.urls]
-documentation = "https://www.idiap.ch/software/biosignal/docs/software/idiap-devtools/main/"
+documentation = "https://idiap-devtools.readthedocs.io/en/latest/"
 homepage = "https://pypi.org/project/idiap-devtools"
 repository = "https://gitlab.idiap.ch/software/idiap-devtools"
 changelog = "https://gitlab.idiap.ch/software/idiap-devtools/-/releases"
