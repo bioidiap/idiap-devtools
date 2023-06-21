@@ -36,8 +36,13 @@ PROJECT_BADGES = [
     },
     {
         "name": "PyPI (version)",
-        "link_url": "https://pypi.python.org/pypi/{name}",
-        "image_url": "https://img.shields.io/pypi/v/{name}.svg",
+        "link_url": "https://pypi.python.org/pypi/%{{project_name}}",
+        "image_url": "https://img.shields.io/pypi/v/%{{project_name}}.svg",
+    },
+    {
+        "name": "Conda-forge (version)",
+        "link_url": "https://anaconda.org/conda-forge/%{{project_name}}",
+        "image_url": "https://img.shields.io/conda/vn/conda-forge/%{{project_name}}.svg",
     },
 ]
 
