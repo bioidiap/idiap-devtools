@@ -41,6 +41,7 @@ requirements:
     - gitpython
     - python-gitlab
     - python-dateutil
+    - pytz
     - setuptools
     - xdg
 
