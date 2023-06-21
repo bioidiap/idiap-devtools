@@ -8,7 +8,7 @@
 
 [project]
 name = "idiap-devtools"
-version = "1.0.0b0"
+version = "1.0.0"
 requires-python = ">=3.9"
 description = "This package contains a *pot-pourri* of various tools required to develop python packages at Idiap's GitLab infrastructure"
 readme = "README.md"
@@ -40,7 +40,7 @@ dependencies = [
     ]
 
 [project.urls]
-documentation = "https://www.idiap.ch/software/biosignal/docs/software/idiap-devtools/main/"
+documentation = "https://www.idiap.ch/software/biosignal/docs/software/idiap-devtools/v1.0.0/"
 homepage = "https://pypi.org/project/idiap-devtools"
 repository = "https://gitlab.idiap.ch/software/idiap-devtools"
 changelog = "https://gitlab.idiap.ch/software/idiap-devtools/-/releases"
