@@ -46,8 +46,15 @@ requirements:
     - xdg
 
 test:
+  source_files:
+    - tests
   imports:
     - {{ data['project']['name'].replace('-','_') }}
+  commands:
+    - pytest -sv tests
+  requires:
+    - pytest {{ pytest }}
+    - git
 
 about:
   home: {{ data['project']['urls']['homepage'] }}
