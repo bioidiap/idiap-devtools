@@ -1,17 +1,7 @@
-# Copyright © 2022 Idiap Research Institute <contact@idiap.ch>
+# SPDX-FileCopyrightText: Copyright © 2022 Idiap Research Institute <contact@idiap.ch>
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 include:
   - project: software/dev-profile
-    file: /gitlab/python.yml
-
-
-documentation:
-  image: quay.io/condaforge/linux-anvil-cos7-x86_64
-  before_script:
-    - rm -f /home/conda/.condarc
-    - mamba update --override-channels -c conda-forge -n base --all
-    - eval "$(/opt/conda/bin/conda shell.bash hook)"
-    - conda activate base
-    - pip install --pre --index-url https://gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple '.[doc]' sphinx
+    file: /gitlab/python+rtd.yml

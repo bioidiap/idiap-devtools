@@ -9,7 +9,7 @@ import typing
 import click
 
 from idiap_devtools.click import validate_profile
-from idiap_devtools.profile import Profile
+from idiap_devtools.profile import Profile, get_profile_path
 
 from ...click import PreserveIndentCommand, verbosity_option
 from ...logging import setup
@@ -26,7 +26,7 @@ Examples:
 
      .. code:: sh
 
-        devtool gitlab release --profile=default -vv changelog.md
+        devtool gitlab release -vv changelog.md
 
      .. tip::
 
@@ -38,7 +38,21 @@ Examples:
 
      .. code:: sh
 
-        devtool gitlab release --profile=default -vv --dry-run changelog.md
+        devtool gitlab release -vv --dry-run changelog.md
+
+  3. You may also pin package dependencies upon the release, so that the
+     shipped package respects a particular development profile set of pins:
+
+     .. code:: sh
+
+        devtool gitlab release -vv --pin-dependencies changelog.md
+
+     The `default` profile is used, if set on your configuration file.
+     Otherwise, you may specify it explicitly like:
+
+     .. code:: sh
+
+        devtool gitlab release -vv --profile=specific --pin-dependencies changelog.md
 
 """,
 )
@@ -46,11 +60,20 @@ Examples:
 @click.option(
     "-P",
     "--profile",
-    default=None,
+    default="default",
     show_default=True,
+    callback=validate_profile,
     help="Directory containing the development profile (and a file named "
     "profile.toml), or the name of a configuration key pointing to the "
     "development profile to use",
+)
+@click.option(
+    "-p",
+    "--pin-dependencies/--no-pin-dependencies",
+    default=False,
+    help="If set, then pin dependencies from the dev-profile on the package "
+    "to be released.  By default your default dev-profile is used.  You may "
+    "override this using the --profile option",
 )
 @click.option(
     "-d",
@@ -63,8 +86,9 @@ Examples:
 @verbosity_option(logger=logger)
 def release(
     changelog: typing.TextIO,
-    dry_run: bool,
     profile: str,
+    pin_dependencies: bool,
+    dry_run: bool,
     **_,
 ) -> None:
     """Tags packages on GitLab from an input CHANGELOG in markdown format.
@@ -74,7 +98,8 @@ def release(
     in order):
 
         * Modifies ``pyproject.toml`` with the new release number and pins the
-          dependencies according to the specified profile's constraints
+          dependencies according to the specified profile's constraints (if one
+          was specified)
         * Sets-up the README links to point to the correct pipeline and
           documentation for the package
         * Commits, tags and pushes the git project adding the changelog
@@ -85,8 +110,10 @@ def release(
           pipeline versions
         * Re-commits and pushes the whole with the option ``[ci skip]``.
 
-    When a dev-profile is given (with ``--profile``), the versions of the dependencies
-    in ``pyproject.toml`` will be pinned to those of the ``constraints.txt`` file.
+    N.B.: When the option ``pin-dependencies`` is set, the versions of the
+    dependencies in ``pyproject.toml`` will be pinned to those of the Python
+    ``constraints.txt`` file available in the select development profile
+    (choose using option ``--profile``).
 
     The changelog is expected to have the following structure:
 
@@ -128,18 +155,6 @@ def release(
 
     gl = get_gitlab_instance()
 
-    if profile is None:
-        logger.warning(
-            "No dev-profile given. There will be no dependencies version pinning. "
-            "To enable pinning, set the --profile option."
-        )
-    else:
-        profile = validate_profile(None, None, profile)
-        logger.info(
-            "Loading profile '%s' for dependencies version pinning.", profile
-        )
-        loaded_profile = Profile(profile)
-
     # traverse all packages in the changelog, edit older tags with updated
     # comments, tag them with a suggested version, then try to release, and
     # wait until done to proceed to the next package
@@ -155,9 +170,22 @@ def release(
     ]
 
     if dry_run:
-        click.secho("!!!! DRY RUN MODE !!!!", fg="yellow", bold=True)
         click.secho(
-            "No changes will be committed to GitLab.", fg="yellow", bold=True
+            "DRY RUN MODE: No changes will be committed to GitLab.",
+            fg="yellow",
+            bold=True,
+        )
+
+    # loads profile data
+    if pin_dependencies:
+        the_profile = Profile(profile)
+        logger.info(
+            f"Pinning dependencies from profile `{get_profile_path(profile)}'...",
+        )
+    else:
+        the_profile = None
+        logger.warning(
+            "Not pinning dependencies (use --pin-dependencies to change this).",
         )
 
     for pkg_number, (header, line) in enumerate(pkgs):
@@ -223,7 +251,7 @@ def release(
             tag_name=vtag,
             tag_comments=description_text,
             dry_run=dry_run,
-            profile=loaded_profile,
+            profile=the_profile,
         )
         if not dry_run:
             # now, wait for the pipeline to finish, before we can release the
