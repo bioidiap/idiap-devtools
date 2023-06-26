@@ -8,32 +8,111 @@
  Installation
 ==============
 
-First install mamba_ or conda (preferably via mambaforge_).  Then, in its
-``base`` environment, install this package using one of the methods below:
+First install mamba_ or conda (preferably via mambaforge_, as it is already
+setup to use conda-forge_ as its main distribution channel).  Then, create a
+new environment, containing this package:
 
 
 .. tab:: mamba/conda (RECOMMENDED)
 
    .. code-block:: sh
 
-      mamba install -n base -c https://www.idiap.ch/software/biosignal/conda/label/beta -c conda-forge idiap-devtools
+      # latest release on conda-forge:
+      mamba create -n idiap-devtools idiap-devtools
+      # or, for the latest development code:
+      mamba create -n idiap-devtools -c https://www.idiap.ch/software/biosignal/conda/label/beta idiap-devtools
 
 
 .. tab:: pip
 
    .. warning::
 
-      While this is possible for testing purposes, it is **not recommended**.
-      Pip-installing this package may break your ``base`` conda environment.
-      Moreover, you will need to ensure both ``mamba`` and ``boa`` packages are
-      installed on the ``base`` environment.
+      While this is possible for testing purposes, it is **not recommended**,
+      as this package depends on conda/mamba for some of its functionality.  If
+      you decide to do so, create a new conda/mamba environment, and
+      pip-install this package on it.
 
    .. code-block:: sh
 
-      conda activate base
-      # next step only required if using miniconda or miniforge (skip it if using mambaforge_)
-      conda install -c conda-forge mamba boa
+      # creates the new environment
+      mamba create -n idiap-devtools python=3 pip conda mamba conda-build boa
+      conda activate idiap-devtools
+
+      # latest release on PyPI:
+      pip install idiap-devtools
+      # or, for the latest development code:
       pip install git+https://gitlab.idiap.ch/software/idiap-devtools
+
+
+.. _idiap-devtools.install.running:
+
+Running
+-------
+
+This package contains a single command-line executable named ``devtool``, which
+in turn contains subcommands with various actions.  To run the main
+command-line tool, you must first activate the environment where it is
+installed in, and then call it on the command-line:
+
+.. code-block:: sh
+
+   conda activate idiap-devtools
+   devtool --help
+   conda deactivate  # to go back to the previous state
+
+
+It is possible to use the command ``conda run`` to, instead, automatically
+prefix the execution of ``devtool`` with an environment activation, and follow
+it with a deactivation.  This allows to compact the above form into a
+"one-liner":
+
+.. code-block:: sh
+
+   mamba --no-banner run -n idiap-devtools --no-capture-output --live-stream devtool --help
+
+
+.. tip::
+
+   If you use a POSIX shell, such as bash or zsh, you can add a function to your
+   environment, so that the above command-line becomes easier to access:
+
+   .. code-block:: sh
+
+      # Runs a command on a prefixed environment, if the environment is not the
+      # the current one.  Otherwise, just runs the command itself.
+      # argument 1: the conda environment name where the program exists
+      # other arguments: program and arguments to be executed at the prefixed
+      # conda environment
+      function mamba-run-on {
+          # if the environment is set, then just run the command
+          if [[ "${CONDA_DEFAULT_ENV}" == "${1}" ]]; then
+              "${@:2}"
+          else
+              mamba --no-banner run -n ${1} --no-capture-output --live-stream "${@:2}"
+          fi
+      }
+
+    You can use it like this:
+
+    .. code-block:: sh
+
+       mamba-run-on idiap-devtools devtool --help
+       alias devtool="mamba-run-on idiap-devtools devtool"
+
+
+.. warning::
+
+   The ``devtool`` application requires that ``mamba``/``conda`` are available
+   on the environment it executes.  When using ``mamba``/``conda`` to create
+   new environments, ensure you are using the ones from the ``base``
+   environment.  Creating new environments as sub-environments of the
+   ``idiap-devtools`` environment may have surprising effects.  To this end, we
+   advise you create a second alias that ensures ``mamba`` is always executed
+   from the ``base`` environment:
+
+    .. code-block:: sh
+
+       alias mamba="mamba-run-on base mamba"
 
 
 .. _idiap-devtools.install.setup:
