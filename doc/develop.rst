@@ -32,15 +32,6 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
    instructions, we assume your development profile is located at
    ``../profile``.
 
-
-.. tip::
-
-   Please refer :ref:`idiap-devtools.install.running` for details on how to
-   setup the ``mamba-run-on`` shell function to simplify the various
-   commands below. If you decide to skip this, remember to properly activate
-   and deactivate the environments everytime.
-
-
 .. tab:: pip
 
    In this variant, the latest (beta) versions of internally developed
@@ -53,9 +44,9 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
 
       $ git clone <PACKAGE-URL>  # e.g. git clone git@gitlab.idiap.ch/software/clapp
       $ cd <PACKAGE>  # e.g. cd clapp
-      $ mamba-run-on base mamba create -n dev python=3.10 pip
-      $ mamba-run-on dev pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint ../profile/python/pip-constraints.txt --editable '.[qa,doc,test]'
+      $ mamba create -n dev python=3.10 pip
       $ conda activate dev
+      (dev) $ pip install --pre --index-url https://token:<YOUR-GITLAB-TOKEN>@gitlab.idiap.ch/api/v4/groups/software/-/packages/pypi/simple --extra-index-url https://pypi.org/simple --constraint ../profile/python/pip-constraints.txt --editable '.[qa,doc,test]'
       (dev) $ # `dev` environment is now ready, just develop
 
    .. note::
@@ -93,10 +84,10 @@ development environment through pip_ (with `the --editable option <pip-e_>`_).
 
       $ git clone <PACKAGE>
       $ cd <PACKAGE>
-      $ mamba-run-on idiap-devtools devtool env -vv .
-      $ mamba-run-on base mamba env create -n dev -f environment.yaml
-      $ mamba-run-on dev pip install --no-build-isolation --no-dependencies --editable .
+      $ mamba run -n idiap-devtools --live-stream devtool env -vv .
+      $ mamba env create -n dev -f environment.yaml
       $ conda activate dev
+      (dev) $ pip install --no-build-isolation --no-dependencies --editable .
       (dev) $ # `dev` environment is now ready, just develop
 
    .. note::
@@ -154,7 +145,7 @@ similar to the above, except you will git-clone and pip-install more packages:
       $ git clone <PACKAGE-A>
       $ cd <PACKAGE-A>
       $ git clone <PACKAGE-B> src/<PACKAGE-B>
-      $ mamba-run-on base mamba create -n dev python=3.10 pip
+      $ mamba create -n dev python=3.10 pip
       # get the constraints for the "target" development environment.
       # this is just an example:
       $ curl -O constraints.txt https://gitlab.idiap.ch/software/dev-profile/-/raw/main/python/pip-constraints.txt
@@ -177,8 +168,8 @@ similar to the above, except you will git-clone and pip-install more packages:
       $ git clone <PACKAGE-A>
       $ cd <PACKAGE-A>
       $ git clone <PACKAGE-B> src/<PACKAGE-B>
-      $ mamba-run-on idiap-devtools devtool env -vv src/package-b .
-      $ mamba-run-on base mamba env create -n dev -f environment.yaml
+      $ mamba run -n idiap-devtools --live-stream devtool env -vv src/package-b .
+      $ mamba env create -n dev -f environment.yaml
       $ conda activate dev
       (dev) $ for pkg in "src/package-b" "."; do pip install --no-build-isolation --no-dependencies --editable "${pkg}"
       (dev) $ # `dev` environment is now ready, just develop
@@ -195,8 +186,8 @@ packages, we only provide this option:
 
 .. code:: sh
 
-   $ mamba-run-on idiap-devtools devtool fullenv -vv
-   $ mamba-run-on base mamba env create -n dev -f environment.yaml
+   $ mamba run -n idiap-devtools --live-stream devtool fullenv -vv
+   $ mamba env create -n dev -f environment.yaml
    $ conda activate dev
    (dev) $ for pkg in "src/*"; do pip install --no-build-isolation --no-dependencies --editable "${pkg}"
 

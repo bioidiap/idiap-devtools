@@ -63,58 +63,25 @@ installed in, and then call it on the command-line:
    conda deactivate  # to go back to the previous state
 
 
-It is possible to use the command ``conda run`` to, instead, automatically
-prefix the execution of ``devtool`` with an environment activation, and follow
-it with a deactivation.  This allows to compact the above form into a
-"one-liner":
+It is possible to use the command ``mamba run`` (or ``conda run``, if you
+installed miniforge) to, instead, automatically prefix the execution of
+``devtool`` with an environment activation, and follow it with a deactivation.
+This allows to compact the above form into a "one-liner":
 
 .. code-block:: sh
 
-   mamba --no-banner run -n idiap-devtools --no-capture-output --live-stream devtool --help
-
-
-.. tip::
-
-   If you use a POSIX shell, such as bash or zsh, you can add a function to your
-   environment, so that the above command-line becomes easier to access:
-
-   .. code-block:: sh
-
-      # Runs a command on a prefixed environment, if the environment is not the
-      # the current one.  Otherwise, just runs the command itself.
-      # argument 1: the conda environment name where the program exists
-      # other arguments: program and arguments to be executed at the prefixed
-      # conda environment
-      function mamba-run-on {
-          # if the environment is set, then just run the command
-          if [[ "${CONDA_DEFAULT_ENV}" == "${1}" ]]; then
-              "${@:2}"
-          else
-              mamba --no-banner run -n ${1} --no-capture-output --live-stream "${@:2}"
-          fi
-      }
-
-    You can use it like this:
-
-    .. code-block:: sh
-
-       mamba-run-on idiap-devtools devtool --help
-       alias devtool="mamba-run-on idiap-devtools devtool"
+   mamba run -n idiap-devtools --live-stream devtool --help
 
 
 .. warning::
 
    The ``devtool`` application requires that ``mamba``/``conda`` are available
    on the environment it executes.  When using ``mamba``/``conda`` to create
-   new environments, ensure you are using the ones from the ``base``
-   environment.  Creating new environments as sub-environments of the
-   ``idiap-devtools`` environment may have surprising effects.  To this end, we
-   advise you create a second alias that ensures ``mamba`` is always executed
-   from the ``base`` environment:
-
-    .. code-block:: sh
-
-       alias mamba="mamba-run-on base mamba"
+   new environments, ensure you are using the mamba executable **from the
+   ``base`` environment**.  Creating new environments as sub-environments of
+   the ``idiap-devtools`` environment may have surprising effects.  A way to do
+   this is to first activate the ``base`` environment, and then create the new
+   environment.
 
 
 .. _idiap-devtools.install.setup:
