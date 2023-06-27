@@ -17,9 +17,10 @@ new environment, containing this package:
 
    .. code-block:: sh
 
-      # latest release on conda-forge:
+      # installs the latest release on conda-forge:
       mamba create -n idiap-devtools idiap-devtools
-      # or, for the latest development code:
+
+      # OR, installs the latest development code:
       mamba create -n idiap-devtools -c https://www.idiap.ch/software/biosignal/conda/label/beta idiap-devtools
 
 
@@ -38,9 +39,10 @@ new environment, containing this package:
       mamba create -n idiap-devtools python=3 pip conda mamba conda-build boa
       conda activate idiap-devtools
 
-      # latest release on PyPI:
+      # installs the latest release on PyPI:
       pip install idiap-devtools
-      # or, for the latest development code:
+
+      # OR, installs the latest development code:
       pip install git+https://gitlab.idiap.ch/software/idiap-devtools
 
 
